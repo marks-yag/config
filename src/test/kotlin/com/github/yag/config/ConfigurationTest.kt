@@ -1,7 +1,11 @@
 package com.github.yag.config
 
 import com.github.yag.crypto.AESCrypto
+import sun.management.jdp.JdpJmxPacket
 import java.lang.NumberFormatException
+import java.net.InetSocketAddress
+import java.net.URI
+import java.net.URL
 import java.util.Properties
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,6 +28,7 @@ class ConfigurationTest {
 
         val config = StringConfig()
         export(StringConfig::class).let { result ->
+            exportAsProperties(result, System.out)
             assertEquals(2, result.size)
             result["username"].let {
                 assertNotNull(it)
@@ -54,6 +59,7 @@ class ConfigurationTest {
 
             val config = NumberConfig()
             export(NumberConfig::class).let { result ->
+                exportAsProperties(result, System.out)
                 result["port"].let {
                     assertNotNull(it)
                     assertEquals(config.port, it.value)
@@ -91,6 +97,7 @@ class ConfigurationTest {
 
         val config = BooleanConfig()
         export(BooleanConfig::class).let { result ->
+            exportAsProperties(result, System.out)
             result["auth"].let {
                 assertNotNull(it)
                 assertEquals(config.auth, it.value)
@@ -104,14 +111,47 @@ class ConfigurationTest {
         Mode.values().forEach { mode ->
             mapOf(
                     "mode" to mode.toString()
-            ).config(EnumConfig::class).let {  }
+            ).config(EnumConfig::class).let {
+                assertEquals(mode, it.mode)
+            }
         }
 
         val config = EnumConfig()
         export(EnumConfig::class).let { result ->
+            exportAsProperties(result, System.out)
             result["mode"].let {
                 assertNotNull(it)
                 assertEquals(config.mode, it.value)
+                assertTrue(it.annotation.required)
+            }
+        }
+    }
+
+    @Test
+    fun testEndpoint() {
+        mapOf(
+            "address" to "127.0.0.1:9527",
+            "url" to "http://127.0.0.1:9527",
+            "uri" to "mailto:yag@github.com"
+        ).config(EndpointConfig::class).let {
+            assertEquals(InetSocketAddress("127.0.0.1", 9527), it.address)
+            assertEquals(URL("http://127.0.0.1:9527"), it.url)
+            assertEquals(URI("mailto:yag@github.com"), it.uri)
+        }
+
+        val config = EndpointConfig()
+        export(EndpointConfig::class).let { result ->
+            exportAsProperties(result, System.out)
+            result["address"].let {
+                assertNotNull(it)
+                assertTrue(it.annotation.required)
+            }
+            result["url"].let {
+                assertNotNull(it)
+                assertTrue(it.annotation.required)
+            }
+            result["uri"].let {
+                assertNotNull(it)
                 assertTrue(it.annotation.required)
             }
         }
@@ -127,6 +167,7 @@ class ConfigurationTest {
 
         val config = CollectionConfig()
         export(CollectionConfig::class).let { result ->
+            exportAsProperties(result, System.out)
             result["options"].let {
                 assertNotNull(it)
                 assertEquals(config.options, it.value)
@@ -148,6 +189,7 @@ class ConfigurationTest {
 
         val config = MapConfig()
         export(MapConfig::class).let { result ->
+            exportAsProperties(result, System.out)
             result["options.test"].let {
                 assertNotNull(it)
                 val set = config.options["test"]
@@ -191,19 +233,42 @@ class ConfigurationTest {
 
         val config = NestConfig()
         export(NestConfig::class).let { result ->
+            exportAsProperties(result, System.out)
             result["enum.mode"].let {
                 assertNotNull(it)
                 assertEquals(config.enum.mode, it.value)
                 assertTrue(it.annotation.required)
+                assertTrue(it.required)
             }
-            /**
-             * TODO
+
             result["bool.auth"].let {
                 assertNotNull(it)
                 assertEquals(false, it.value)
-                assertFalse(it.annotation.required)
+                assertTrue(it.annotation.required)
+                assertFalse(it.required)
             }
-            **/
+        }
+    }
+
+    @Test
+    fun testDefaultName() {
+        mapOf(
+            "hello" to "foo",
+            "hello-world" to "bar"
+        ).config(DefaultNameConfig::class).let { result ->
+            assertEquals("foo", result.hello)
+            assertEquals("bar", result.helloWorld)
+        }
+
+        val config = DefaultNameConfig()
+        export(DefaultNameConfig::class).let { result ->
+            exportAsProperties(result, System.out)
+            result["hello"].let {
+                assertNotNull(it)
+            }
+            result["hello-world"].let {
+                assertNotNull(it)
+            }
         }
     }
 
@@ -219,6 +284,9 @@ class ConfigurationTest {
         assertEquals("1", valueToText(1))
         assertEquals("1.2", valueToText(1.2))
         assertEquals("SINGLE", valueToText(Mode.SINGLE))
+        assertEquals("127.0.0.1:9527", valueToText(InetSocketAddress("127.0.0.1", 9527)))
+        assertEquals("http://127.0.0.1:9527", valueToText(URL("http://127.0.0.1:9527")))
+        assertEquals("mailto:yag@github.com", valueToText(URI("mailto:yag@github.com")))
         assertEquals("1,2,3", valueToText(listOf(1, 2, 3)))
     }
 }

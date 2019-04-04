@@ -1,8 +1,10 @@
 package com.github.yag.config
 
+import com.google.common.base.CaseFormat
 import java.io.OutputStream
 import java.io.PrintStream
 import java.lang.IllegalArgumentException
+import java.net.InetSocketAddress
 import java.util.TreeMap
 import kotlin.reflect.KClass
 
@@ -22,31 +24,39 @@ internal fun export(clazz: KClass<*>): Map<String, Item> {
     return export(clazz.java)
 }
 
-internal fun export(clazz: Class<*>, prefix: String, map: MutableMap<String, Item>, instance: Any = clazz.newInstance()) {
+internal fun export(clazz: Class<*>, prefix: String, map: MutableMap<String, Item>, instance: Any = clazz.newInstance(), required: Boolean = true) {
     getDeclaredFields(clazz).forEach { field ->
         field.isAccessible = true
         val fieldType = field.type
-        val fieldValue = field.get(instance) ?: (fieldType.constructors.singleOrNull { it.parameterCount == 0 }?.newInstance() ?: "")
+        val fieldValue = field.get(instance) ?: (fieldType.constructors.singleOrNull { it.parameterCount == 0 }?.newInstance() ?: "") //TODO maybe let it null is better.
         val annotation = field.getAnnotation(Value::class.java)
 
         if (annotation != null) {
-            val configName = prefix + annotation.config
+            val config = annotation.config.let {
+                if (it.isEmpty()) {
+                    CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, field.name)
+                } else {
+                    it
+                }
+            }
+
+            val configName = prefix + config
             if (!map.contains(configName)) {
                 when {
                     isPlainType(fieldType) || fieldValue is Collection<*> -> {
-                        map[configName] = Item(fieldValue, annotation)
+                        map[configName] = Item(fieldValue, annotation, required && annotation.required)
                     }
                     fieldValue is Map<*, *> -> {
                         fieldValue.forEach { any, u ->
-                            map["$configName.$any"] = Item(u!!, annotation)
+                            map["$configName.$any"] = Item(u!!, annotation, required && annotation.required)
                         }
                     }
                     else -> {
-                        export(fieldType, "$configName.", map, fieldValue)
+                        export(fieldType, "$configName.", map, fieldValue, required && annotation.required)
                     }
                 }
             } else {
-                throw IllegalArgumentException("Duplicated configuration item: $configName")
+                throw IllegalArgumentException("Duplicated configuration item: [$configName].")
             }
         }
     }
@@ -56,7 +66,7 @@ internal fun exportAsProperties(map: Map<String, Item>, out: OutputStream) {
     val ps = PrintStream(out)
     map.forEach { key, value ->
         exportDesc(value.annotation, ps)
-        if (!value.annotation.required) {
+        if (!value.required) {
             ps.print("#")
         }
         ps.println("$key=${valueToText(value.value)}")
@@ -78,8 +88,9 @@ internal fun escape(value: String): String {
     return value.replace(" ", "\\ ")
 }
 
-internal fun <T : Any> valueToText(value: T): String {
+internal fun <T : Any> valueToText(value: T?): String {
     return when(value) {
+        is InetSocketAddress -> "${value.hostString}:${value.port}"
         is Collection<*> -> {
             (value as Collection<*>).joinToString(",") {
                 escape(it.toString())
@@ -91,4 +102,4 @@ internal fun <T : Any> valueToText(value: T): String {
     }
 }
 
-internal data class Item(val value: Any, val annotation: Value)
+internal data class Item(val value: Any, val annotation: Value, val required: Boolean = annotation.required)

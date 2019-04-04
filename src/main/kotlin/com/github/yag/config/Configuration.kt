@@ -1,9 +1,11 @@
 package com.github.yag.config
 
 import com.github.yag.crypto.AESCrypto
+import com.google.common.base.CaseFormat
 import java.lang.IllegalArgumentException
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
+import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
 import java.util.Properties
@@ -30,8 +32,16 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
             val encrypted: Encrypted? = field.getAnnotation(Encrypted::class.java)
 
             if (annotation != null) {
-                if (!annotation.config.isEmpty()) {
-                    val value = properties[annotation.config]
+                val config = annotation.config.let {
+                    if (it.isEmpty()) {
+                        CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, field.name)
+                    } else {
+                        it
+                    }
+                }
+
+                if (!config.isEmpty()) {
+                    val value = properties[config]
 
                     if (isPlainType(fieldType)) {
                         checkRequired(value, annotation)
@@ -45,17 +55,17 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                                 parseCollection(genericFieldType as ParameterizedType, value, fieldValue)
                             }
                         } else {
-                            throw IllegalArgumentException("Collection ${annotation.config} can not be null.")
+                            throw IllegalArgumentException("Collection $config can not be null.")
                         }
                     } else if (isMapType(fieldType)) {
                         if (fieldType != null) {
-                            withPrefix(annotation.config + ".").refreshMap(genericFieldType, fieldValue as MutableMap<Any, Any>)
+                            withPrefix("$config.").refreshMap(genericFieldType, fieldValue as MutableMap<Any, Any>)
                         } else {
-                            throw IllegalArgumentException("Map ${annotation.config} can not be null.")
+                            throw IllegalArgumentException("Map $config can not be null.")
                         }
                     } else {
                         if ((value == null && annotation.required) || value?.toBoolean() == true) {
-                            val configuration = withPrefix(annotation.config + ".")
+                            val configuration = withPrefix("$config.")
                             if (fieldValue == null) {
                                 field.set(obj, configuration.get(fieldType))
                             } else {
@@ -93,6 +103,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                 Short::class.java -> value.toShort()
                 Byte::class.java -> value.toByte()
                 Boolean::class.java -> value.toBoolean()
+                InetSocketAddress::class.java -> value.split(":").let { InetSocketAddress(it[0], it[1].toInt()) }
                 URI::class.java -> URI(value)
                 URL::class.java -> URL(value)
 

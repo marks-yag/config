@@ -2,6 +2,7 @@ package com.github.yag.config
 
 import com.google.common.primitives.Primitives
 import java.lang.reflect.Field
+import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
 
@@ -22,7 +23,8 @@ internal fun isPlainType(fieldType: Class<*>) =
             Primitives.isWrapperType(fieldType) ||
             fieldType.isEnum ||
             fieldType == URI::class.java ||
-            fieldType == URL::class.java
+            fieldType == URL::class.java ||
+            fieldType == InetSocketAddress::class.java
 
 internal fun isCollectionType(fieldType: Class<*>) = Collection::class.java.isAssignableFrom(fieldType)
 

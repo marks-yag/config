@@ -1,5 +1,8 @@
 package com.github.yag.config
 
+import java.net.InetSocketAddress
+import java.net.URI
+import java.net.URL
 import java.util.TreeSet
 
 class StringConfig {
@@ -36,7 +39,20 @@ class BooleanConfig {
 class EnumConfig {
 
     @Value("mode", required = true)
-    val mode = Mode.CLUSTER
+    var mode = Mode.CLUSTER
+
+}
+
+class EndpointConfig {
+
+    @Value("address", required = true)
+    lateinit var address: InetSocketAddress
+
+    @Value("url", required = true)
+    lateinit var url: URL
+
+    @Value("uri", required = true)
+    lateinit var uri: URI
 
 }
 
@@ -64,6 +80,16 @@ class NestConfig {
 
     @Value("bool")
     val bool: BooleanConfig? = null
+
+}
+
+class DefaultNameConfig {
+
+    @Value
+    lateinit var hello: String
+
+    @Value
+    lateinit var helloWorld: String
 
 }
 
