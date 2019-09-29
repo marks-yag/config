@@ -61,6 +61,9 @@ class CollectionConfig {
     @Value("options", required = true)
     var options = TreeSet<Options>()
 
+    @Value("list")
+    val list = ArrayList<BooleanConfig>()
+
 }
 
 class MapConfig {
@@ -70,6 +73,9 @@ class MapConfig {
         this["test"] = setOf(Options.Indexing, Options.Compression)
         this["prod"] = setOf(Options.Indexing, Options.Compression, Options.Encryption)
     }
+
+    @Value("map")
+    val map = LinkedHashMap<String, BooleanConfig>()
 
 }
 

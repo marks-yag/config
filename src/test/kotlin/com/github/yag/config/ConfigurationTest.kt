@@ -159,9 +159,16 @@ class ConfigurationTest {
     @Test
     fun testCollection() {
         mapOf(
-                "options" to Options.values().joinToString(",")
+                "options" to Options.values().joinToString(","),
+                "list" to "one,two,three",
+                "list.one.auth" to "true",
+                "list.two.auth" to "false",
+                "list.three.auth" to "true"
         ).config(CollectionConfig::class).let {
             assertEquals(Options.values().toSet(), it.options)
+            assertTrue(it.list[0]!!.auth)
+            assertFalse(it.list[1]!!.auth)
+            assertTrue(it.list[2]!!.auth)
         }
 
         val config = CollectionConfig()
@@ -179,11 +186,17 @@ class ConfigurationTest {
     fun testMap() {
         mapOf(
                 "options.mark" to Options.Encryption.toString(),
-                "options.guile" to setOf(Options.Compression, Options.Indexing).joinToString(",")
+                "options.guile" to setOf(Options.Compression, Options.Indexing).joinToString(","),
+                "map.first" to "first",
+                "map.second" to "second",
+                "map.first.auth" to "true",
+                "map.second.auth" to "false"
         ).config(MapConfig::class).let {
             assertEquals(2, it.options.size)
             assertEquals(setOf(Options.Encryption), it.options["mark"])
             assertEquals(setOf(Options.Compression, Options.Indexing), it.options["guile"])
+            assertTrue(it.map["first"]!!.auth)
+            assertFalse(it.map["second"]!!.auth)
         }
 
         val config = MapConfig()

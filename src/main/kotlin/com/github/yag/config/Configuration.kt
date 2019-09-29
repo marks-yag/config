@@ -2,6 +2,7 @@ package com.github.yag.config
 
 import com.github.yag.crypto.AESCrypto
 import com.google.common.base.CaseFormat
+import com.google.common.base.Preconditions
 import java.lang.IllegalArgumentException
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -40,7 +41,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                     }
                 }
 
-                if (!config.isEmpty()) {
+                if (config.isNotEmpty()) {
                     val value = properties[config]
 
                     if (isPlainType(fieldType)) {
@@ -52,7 +53,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                         checkRequired(value, annotation)
                         if (fieldValue != null) {
                             if (value != null) {
-                                parseCollection(genericFieldType as ParameterizedType, value, fieldValue)
+                                withPrefix("$config.").parseCollection(genericFieldType as ParameterizedType, value, fieldValue)
                             }
                         } else {
                             throw IllegalArgumentException("Collection $config can not be null.")
@@ -84,7 +85,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
         }
     }
 
-    private fun <T> parse(fieldType: Class<T>, value: String, encrypted: Encrypted? = null) : T {
+    private fun <T: Any> parse(fieldType: Class<T>, value: String, encrypted: Encrypted? = null) : T {
         return (if (fieldType.isEnum) {
             getEnumValue(fieldType, value)
         } else {
@@ -108,7 +109,13 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                 URL::class.java -> URL(value)
 
                 else -> {
-                    throw IllegalArgumentException("Can not parse $fieldType.")
+                    val type = properties["$value"]?.let {
+                        Class.forName(it)
+                    }?: fieldType
+
+                    Preconditions.checkArgument(fieldType.isAssignableFrom(type))
+
+                    withPrefix("$value.").get(type)
                 }
             }
         }) as T
@@ -141,7 +148,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
         config.clear()
         if (genericType is ParameterizedType) {
             val typeArguments = genericType.actualTypeArguments
-            properties.forEach { key, value ->
+            properties.forEach { (key, value) ->
                 val keyClass = typeArguments[0] as Class<*>
                 val valueType = typeArguments[1]
 
