@@ -3,14 +3,26 @@ package com.github.yag.config
 import com.github.yag.crypto.AESCrypto
 import com.google.common.base.CaseFormat
 import com.google.common.base.Preconditions
-import java.lang.IllegalArgumentException
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
-import java.util.Properties
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.Collection
 import kotlin.collections.HashMap
+import kotlin.collections.HashSet
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.MutableCollection
+import kotlin.collections.MutableMap
+import kotlin.collections.Set
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.filter
+import kotlin.collections.forEach
+import kotlin.collections.set
 import kotlin.reflect.KClass
 
 class Configuration(private val properties: Map<String, String>) {
@@ -56,7 +68,11 @@ class Configuration(private val properties: Map<String, String>) {
                         checkRequired(value, annotation)
                         if (fieldValue != null) {
                             if (value != null) {
-                                withPrefix("$config.").parseCollection(genericFieldType as ParameterizedType, value, fieldValue)
+                                withPrefix("$config.").parseCollection(
+                                    genericFieldType as ParameterizedType,
+                                    value,
+                                    fieldValue
+                                )
                             }
                         } else {
                             throw IllegalArgumentException("Collection $config can not be null.")
@@ -94,7 +110,7 @@ class Configuration(private val properties: Map<String, String>) {
         }
     }
 
-    private fun <T: Any> parse(fieldType: Class<T>, value: String, encrypted: Encrypted? = null) : T {
+    private fun <T : Any> parse(fieldType: Class<T>, value: String, encrypted: Encrypted? = null): T {
         return (if (fieldType.isEnum) {
             getEnumValue(fieldType, value)
         } else {
@@ -120,7 +136,7 @@ class Configuration(private val properties: Map<String, String>) {
                 else -> {
                     val type = properties["$value"]?.let {
                         Class.forName(it)
-                    }?: fieldType
+                    } ?: fieldType
 
                     Preconditions.checkArgument(fieldType.isAssignableFrom(type))
 
@@ -142,7 +158,7 @@ class Configuration(private val properties: Map<String, String>) {
     /**
      * Filter k/v pairs starts with prefix, and remove the prefix, to a new map.
      */
-    private fun extract(prefix: String, properties: Map<String, String>) : HashMap<String, String> {
+    private fun extract(prefix: String, properties: Map<String, String>): HashMap<String, String> {
         val newProps = HashMap<String, String>()
         properties.filter {
             (it.key).startsWith(prefix)
@@ -189,25 +205,25 @@ class Configuration(private val properties: Map<String, String>) {
         }
     }
 
-    fun <T: Any> get(clazz: Class<T>) : T {
+    fun <T : Any> get(clazz: Class<T>): T {
         return clazz.newInstance().also {
             refresh(it)
         }
     }
 }
 
-fun <T: Any> Properties.config(clazz: Class<T>): T {
+fun <T : Any> Properties.config(clazz: Class<T>): T {
     return Configuration(this).get(clazz)
 }
 
-fun <T: Any> Properties.config(clazz: KClass<T>) : T {
+fun <T : Any> Properties.config(clazz: KClass<T>): T {
     return this.config(clazz.java)
 }
 
-fun <T: Any> Map<String, String>.config(clazz: Class<T>) : T {
+fun <T : Any> Map<String, String>.config(clazz: Class<T>): T {
     return Configuration(this).get(clazz)
 }
 
-fun <T: Any> Map<String, String>.config(clazz: KClass<T>) : T {
+fun <T : Any> Map<String, String>.config(clazz: KClass<T>): T {
     return this.config(clazz.java)
 }

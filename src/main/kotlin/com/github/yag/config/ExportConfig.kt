@@ -3,9 +3,17 @@ package com.github.yag.config
 import com.google.common.base.CaseFormat
 import java.io.OutputStream
 import java.io.PrintStream
-import java.lang.IllegalArgumentException
 import java.net.InetSocketAddress
-import java.util.TreeMap
+import java.util.*
+import kotlin.collections.Collection
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.Map
+import kotlin.collections.MutableMap
+import kotlin.collections.contains
+import kotlin.collections.forEach
+import kotlin.collections.joinToString
+import kotlin.collections.set
+import kotlin.collections.singleOrNull
 import kotlin.reflect.KClass
 
 fun export(clazz: Class<*>, out: PrintStream) {
@@ -24,11 +32,19 @@ internal fun export(clazz: KClass<*>): Map<String, Item> {
     return export(clazz.java)
 }
 
-internal fun export(clazz: Class<*>, prefix: String, map: MutableMap<String, Item>, instance: Any = clazz.newInstance(), required: Boolean = true) {
+internal fun export(
+    clazz: Class<*>,
+    prefix: String,
+    map: MutableMap<String, Item>,
+    instance: Any = clazz.newInstance(),
+    required: Boolean = true
+) {
     getDeclaredFields(clazz).forEach { field ->
         field.isAccessible = true
         val fieldType = field.type
-        val fieldValue = field.get(instance) ?: (fieldType.constructors.singleOrNull { it.parameterCount == 0 }?.newInstance() ?: "") //TODO maybe let it null is better.
+        val fieldValue =
+            field.get(instance) ?: (fieldType.constructors.singleOrNull { it.parameterCount == 0 }?.newInstance()
+                ?: "") //TODO maybe let it null is better.
         val annotation = field.getAnnotation(Value::class.java)
 
         if (annotation != null) {
@@ -89,7 +105,7 @@ internal fun escape(value: String): String {
 }
 
 internal fun <T : Any> valueToText(value: T?): String {
-    return when(value) {
+    return when (value) {
         is InetSocketAddress -> "${value.hostString}:${value.port}"
         is Collection<*> -> {
             (value as Collection<*>).joinToString(",") {

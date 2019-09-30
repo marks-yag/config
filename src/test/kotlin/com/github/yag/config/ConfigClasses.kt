@@ -3,7 +3,13 @@ package com.github.yag.config
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
-import java.util.TreeSet
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.Set
+import kotlin.collections.set
+import kotlin.collections.setOf
 
 class StringConfig {
 

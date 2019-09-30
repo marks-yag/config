@@ -1,11 +1,10 @@
 package com.github.yag.config
 
 import com.github.yag.crypto.AESCrypto
-import java.lang.NumberFormatException
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
-import java.util.Properties
+import java.util.*
 import kotlin.test.*
 
 class ConfigurationTest {
@@ -13,8 +12,8 @@ class ConfigurationTest {
     @Test
     fun testString() {
         mapOf(
-                "username" to "mark",
-                "password" to AESCrypto("foo").encryptUTFToBase64("123")
+            "username" to "mark",
+            "password" to AESCrypto("foo").encryptUTFToBase64("123")
         ).config(StringConfig::class).let {
             assertEquals("mark", it.username)
             assertEquals("123", it.password)
@@ -42,9 +41,9 @@ class ConfigurationTest {
     fun testNumber() {
         repeat(5) { loop ->
             mapOf(
-                    "port" to "${loop + 80}",
-                    "timeoutMs" to "${loop + 1000}",
-                    "percent" to "${loop + 0.8}"
+                "port" to "${loop + 80}",
+                "timeoutMs" to "${loop + 1000}",
+                "percent" to "${loop + 0.8}"
             ).config(NumberConfig::class).let {
                 assertEquals(loop + 80, it.port)
                 assertEquals(loop + 1000L, it.timeoutMs)
@@ -104,7 +103,7 @@ class ConfigurationTest {
     fun testEnum() {
         Mode.values().forEach { mode ->
             mapOf(
-                    "mode" to mode.toString()
+                "mode" to mode.toString()
             ).config(EnumConfig::class).let {
                 assertEquals(mode, it.mode)
             }
@@ -169,16 +168,16 @@ class ConfigurationTest {
     @Test
     fun testCollection() {
         mapOf(
-                "options" to Options.values().joinToString(","),
-                "list" to "one,two,three",
-                "list.one.auth" to "true",
-                "list.two.auth" to "false",
-                "list.three.auth" to "true",
-                "stores" to "hot,cold",
-                "stores.hot" to LocalStore::class.java.name,
-                "stores.hot.local-addr" to "foo",
-                "stores.cold" to RemoteStore::class.java.name,
-                "stores.cold.remote-addr" to "bar"
+            "options" to Options.values().joinToString(","),
+            "list" to "one,two,three",
+            "list.one.auth" to "true",
+            "list.two.auth" to "false",
+            "list.three.auth" to "true",
+            "stores" to "hot,cold",
+            "stores.hot" to LocalStore::class.java.name,
+            "stores.hot.local-addr" to "foo",
+            "stores.cold" to RemoteStore::class.java.name,
+            "stores.cold.remote-addr" to "bar"
         ).config(CollectionConfig::class).let {
             assertEquals(Options.values().toSet(), it.options)
             assertTrue(it.list[0]!!.auth)
@@ -210,16 +209,16 @@ class ConfigurationTest {
     @Test
     fun testMap() {
         mapOf(
-                "options.mark" to Options.Encryption.toString(),
-                "options.guile" to setOf(Options.Compression, Options.Indexing).joinToString(","),
-                "map.first" to "",
-                "map.second" to "",
-                "map.first.auth" to "true",
-                "map.second.auth" to "false",
-                "stores.hot" to LocalStore::class.java.name,
-                "stores.cold" to RemoteStore::class.java.name,
-                "stores.hot.local-addr" to "foo",
-                "stores.cold.remote-addr" to "bar"
+            "options.mark" to Options.Encryption.toString(),
+            "options.guile" to setOf(Options.Compression, Options.Indexing).joinToString(","),
+            "map.first" to "",
+            "map.second" to "",
+            "map.first.auth" to "true",
+            "map.second.auth" to "false",
+            "stores.hot" to LocalStore::class.java.name,
+            "stores.cold" to RemoteStore::class.java.name,
+            "stores.hot.local-addr" to "foo",
+            "stores.cold.remote-addr" to "bar"
         ).config(MapConfig::class).let {
             assertEquals(2, it.options.size)
             assertEquals(setOf(Options.Encryption), it.options["mark"])
@@ -262,9 +261,9 @@ class ConfigurationTest {
     @Test
     fun testNest() {
         mapOf(
-                "enum.mode" to Mode.CLUSTER.toString(),
-                "bool" to "",
-                "bool.auth" to "false"
+            "enum.mode" to Mode.CLUSTER.toString(),
+            "bool" to "",
+            "bool.auth" to "false"
         ).config(NestConfig::class).let { nest ->
             nest.enum.let {
                 assertEquals(Mode.CLUSTER, it.mode)
@@ -276,8 +275,8 @@ class ConfigurationTest {
         }
 
         mapOf(
-                "enum.mode" to Mode.CLUSTER.toString(),
-                "bool.auth" to "false"
+            "enum.mode" to Mode.CLUSTER.toString(),
+            "bool.auth" to "false"
         ).config(NestConfig::class).let { nest ->
             assertNull(nest.bool)
         }
