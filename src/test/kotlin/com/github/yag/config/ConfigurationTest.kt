@@ -163,12 +163,27 @@ class ConfigurationTest {
                 "list" to "one,two,three",
                 "list.one.auth" to "true",
                 "list.two.auth" to "false",
-                "list.three.auth" to "true"
+                "list.three.auth" to "true",
+                "stores" to "hot,cold",
+                "stores.hot" to LocalStore::class.java.name,
+                "stores.hot.local-addr" to "foo",
+                "stores.cold" to RemoteStore::class.java.name,
+                "stores.cold.remote-addr" to "bar"
         ).config(CollectionConfig::class).let {
             assertEquals(Options.values().toSet(), it.options)
             assertTrue(it.list[0]!!.auth)
             assertFalse(it.list[1]!!.auth)
             assertTrue(it.list[2]!!.auth)
+
+            assertEquals(2, it.stores.size)
+            it.stores.first().let {
+                assertTrue(it is LocalStore)
+                assertEquals("foo", it.localAddr)
+            }
+            it.stores.last().let {
+                assertTrue(it is RemoteStore)
+                assertEquals("bar", it.remoteAddr)
+            }
         }
 
         val config = CollectionConfig()
@@ -187,16 +202,30 @@ class ConfigurationTest {
         mapOf(
                 "options.mark" to Options.Encryption.toString(),
                 "options.guile" to setOf(Options.Compression, Options.Indexing).joinToString(","),
-                "map.first" to "first",
-                "map.second" to "second",
+                "map.first" to "",
+                "map.second" to "",
                 "map.first.auth" to "true",
-                "map.second.auth" to "false"
+                "map.second.auth" to "false",
+                "stores.hot" to LocalStore::class.java.name,
+                "stores.cold" to RemoteStore::class.java.name,
+                "stores.hot.local-addr" to "foo",
+                "stores.cold.remote-addr" to "bar"
         ).config(MapConfig::class).let {
             assertEquals(2, it.options.size)
             assertEquals(setOf(Options.Encryption), it.options["mark"])
             assertEquals(setOf(Options.Compression, Options.Indexing), it.options["guile"])
             assertTrue(it.map["first"]!!.auth)
             assertFalse(it.map["second"]!!.auth)
+
+            assertEquals(2, it.stores.size)
+            it.stores["hot"]!!.let {
+                assertTrue(it is LocalStore)
+                assertEquals("foo", it.localAddr)
+            }
+            it.stores["cold"]!!.let {
+                assertTrue(it is RemoteStore)
+                assertEquals("bar", it.remoteAddr)
+            }
         }
 
         val config = MapConfig()

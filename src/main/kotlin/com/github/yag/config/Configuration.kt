@@ -148,7 +148,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
         config.clear()
         if (genericType is ParameterizedType) {
             val typeArguments = genericType.actualTypeArguments
-            properties.forEach { (key, value) ->
+            properties.filter { !it.key.contains('.') }.forEach { (key, value) ->
                 val keyClass = typeArguments[0] as Class<*>
                 val valueType = typeArguments[1]
 
@@ -157,7 +157,8 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                         config[parse(keyClass, key)] = parse(valueType, value)
                     } else {
                         val prefix = key.substringBefore(".")
-                        config[parse(keyClass, prefix)] = withPrefix("$prefix.").get(valueType)
+                        val type = if (value.isNotBlank()) Class.forName(value) else valueType
+                        config[parse(keyClass, prefix)] = withPrefix("$prefix.").get(type)
                     }
                 } else {
                     val valueType = valueType as ParameterizedType
