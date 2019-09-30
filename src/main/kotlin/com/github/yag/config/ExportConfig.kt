@@ -43,7 +43,7 @@ internal fun export(clazz: Class<*>, prefix: String, map: MutableMap<String, Ite
             val configName = prefix + config
             if (!map.contains(configName)) {
                 when {
-                    isPlainType(fieldType) || fieldValue is Collection<*> -> {
+                    isSimpleType(fieldType) || fieldValue is Collection<*> -> {
                         map[configName] = Item(fieldValue, annotation, required && annotation.required)
                     }
                     fieldValue is Map<*, *> -> {

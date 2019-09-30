@@ -56,10 +56,23 @@ class EndpointConfig {
 
 }
 
+class SubTypeConfig {
+
+    @Value(required = true)
+    lateinit var store: Store
+
+}
+
 class CollectionConfig {
 
     @Value("options", required = true)
     var options = TreeSet<Options>()
+
+    @Value("list")
+    val list = ArrayList<BooleanConfig>()
+
+    @Value("stores")
+    val stores = ArrayList<Store>()
 
 }
 
@@ -71,7 +84,31 @@ class MapConfig {
         this["prod"] = setOf(Options.Indexing, Options.Compression, Options.Encryption)
     }
 
+    @Value("map")
+    val map = LinkedHashMap<String, BooleanConfig>()
+
+    @Value("stores")
+    val stores = LinkedHashMap<String, Store>()
+
 }
+
+interface Store {
+}
+
+class LocalStore : Store {
+
+    @Value("local-addr")
+    lateinit var localAddr: String
+
+}
+
+class RemoteStore : Store {
+
+    @Value("remote-addr")
+    lateinit var remoteAddr: String
+
+}
+
 
 class NestConfig {
 

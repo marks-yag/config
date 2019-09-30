@@ -6,12 +6,7 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
 import java.util.Properties
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class ConfigurationTest {
 
@@ -139,6 +134,7 @@ class ConfigurationTest {
         }
 
         val config = EndpointConfig()
+        //TODO add check of config
         export(EndpointConfig::class).let { result ->
             exportAsProperties(result, System.out)
             result["address"].let {
@@ -157,11 +153,47 @@ class ConfigurationTest {
     }
 
     @Test
+    fun testSubType() {
+        mapOf(
+            "store" to LocalStore::class.java.name,
+            "store.local-addr" to "foo"
+        ).config(SubTypeConfig::class).let {
+            it.store.let {
+                assertTrue(it is LocalStore)
+                assertEquals("foo", it.localAddr)
+            }
+        }
+        //TODO check export
+    }
+
+    @Test
     fun testCollection() {
         mapOf(
-                "options" to Options.values().joinToString(",")
+                "options" to Options.values().joinToString(","),
+                "list" to "one,two,three",
+                "list.one.auth" to "true",
+                "list.two.auth" to "false",
+                "list.three.auth" to "true",
+                "stores" to "hot,cold",
+                "stores.hot" to LocalStore::class.java.name,
+                "stores.hot.local-addr" to "foo",
+                "stores.cold" to RemoteStore::class.java.name,
+                "stores.cold.remote-addr" to "bar"
         ).config(CollectionConfig::class).let {
             assertEquals(Options.values().toSet(), it.options)
+            assertTrue(it.list[0]!!.auth)
+            assertFalse(it.list[1]!!.auth)
+            assertTrue(it.list[2]!!.auth)
+
+            assertEquals(2, it.stores.size)
+            it.stores.first().let {
+                assertTrue(it is LocalStore)
+                assertEquals("foo", it.localAddr)
+            }
+            it.stores.last().let {
+                assertTrue(it is RemoteStore)
+                assertEquals("bar", it.remoteAddr)
+            }
         }
 
         val config = CollectionConfig()
@@ -179,11 +211,31 @@ class ConfigurationTest {
     fun testMap() {
         mapOf(
                 "options.mark" to Options.Encryption.toString(),
-                "options.guile" to setOf(Options.Compression, Options.Indexing).joinToString(",")
+                "options.guile" to setOf(Options.Compression, Options.Indexing).joinToString(","),
+                "map.first" to "",
+                "map.second" to "",
+                "map.first.auth" to "true",
+                "map.second.auth" to "false",
+                "stores.hot" to LocalStore::class.java.name,
+                "stores.cold" to RemoteStore::class.java.name,
+                "stores.hot.local-addr" to "foo",
+                "stores.cold.remote-addr" to "bar"
         ).config(MapConfig::class).let {
             assertEquals(2, it.options.size)
             assertEquals(setOf(Options.Encryption), it.options["mark"])
             assertEquals(setOf(Options.Compression, Options.Indexing), it.options["guile"])
+            assertTrue(it.map["first"]!!.auth)
+            assertFalse(it.map["second"]!!.auth)
+
+            assertEquals(2, it.stores.size)
+            it.stores["hot"]!!.let {
+                assertTrue(it is LocalStore)
+                assertEquals("foo", it.localAddr)
+            }
+            it.stores["cold"]!!.let {
+                assertTrue(it is RemoteStore)
+                assertEquals("bar", it.remoteAddr)
+            }
         }
 
         val config = MapConfig()
@@ -211,7 +263,7 @@ class ConfigurationTest {
     fun testNest() {
         mapOf(
                 "enum.mode" to Mode.CLUSTER.toString(),
-                "bool" to "true",
+                "bool" to "",
                 "bool.auth" to "false"
         ).config(NestConfig::class).let { nest ->
             nest.enum.let {
@@ -271,9 +323,21 @@ class ConfigurationTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testMissing() {
-        Properties().config(StringConfig::class)
+        try {
+            Properties().config(StringConfig::class)
+            fail("Check missing failed.")
+        } catch (e: IllegalArgumentException) {
+            assertEquals("username is required.", e.message)
+        }
+
+        try {
+            Properties().config(NestConfig::class)
+            fail("Check messing failed.")
+        } catch (e: IllegalArgumentException) {
+            assertEquals("enum.mode is required.", e.message)
+        }
     }
 
     @Test

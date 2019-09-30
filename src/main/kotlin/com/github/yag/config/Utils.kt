@@ -6,8 +6,7 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
 
-@JvmOverloads
-fun getDeclaredFields(type: Class<*>, fields: MutableCollection<Field> = ArrayList()): Collection<Field> {
+internal fun getDeclaredFields(type: Class<*>, fields: MutableCollection<Field> = ArrayList()): Collection<Field> {
     if (type != Object::class.java) {
         fields.addAll(type.declaredFields)
         type.superclass?.let {
@@ -17,7 +16,7 @@ fun getDeclaredFields(type: Class<*>, fields: MutableCollection<Field> = ArrayLi
     return fields
 }
 
-internal fun isPlainType(fieldType: Class<*>) =
+internal fun isSimpleType(fieldType: Class<*>) =
     fieldType == java.lang.String::class.java ||
             fieldType.isPrimitive ||
             Primitives.isWrapperType(fieldType) ||

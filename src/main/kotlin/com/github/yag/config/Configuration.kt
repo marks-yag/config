@@ -2,6 +2,7 @@ package com.github.yag.config
 
 import com.github.yag.crypto.AESCrypto
 import com.google.common.base.CaseFormat
+import com.google.common.base.Preconditions
 import java.lang.IllegalArgumentException
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -12,13 +13,16 @@ import java.util.Properties
 import kotlin.collections.HashMap
 import kotlin.reflect.KClass
 
-class Configuration @JvmOverloads constructor(private val properties: Map<String, String>, private val base: String = "") {
+class Configuration(private val properties: Map<String, String>) {
 
-    constructor(properties: Properties, base: String = "") : this(HashMap<String, String>().apply {
+    // Used for get absolute key.
+    private var base = ""
+
+    constructor(properties: Properties) : this(HashMap<String, String>().apply {
         properties.stringPropertyNames().forEach {
             put(it, properties.getProperty(it))
         }
-    }, base)
+    })
 
     fun <T : Any> refresh(obj: T) {
         getDeclaredFields(obj.javaClass).forEach { field ->
@@ -40,10 +44,10 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                     }
                 }
 
-                if (!config.isEmpty()) {
+                if (config.isNotEmpty()) {
                     val value = properties[config]
 
-                    if (isPlainType(fieldType)) {
+                    if (isSimpleType(fieldType)) {
                         checkRequired(value, annotation)
                         value?.let {
                             field.set(obj, parse(fieldType, it, encrypted))
@@ -52,7 +56,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                         checkRequired(value, annotation)
                         if (fieldValue != null) {
                             if (value != null) {
-                                parseCollection(genericFieldType as ParameterizedType, value, fieldValue)
+                                withPrefix("$config.").parseCollection(genericFieldType as ParameterizedType, value, fieldValue)
                             }
                         } else {
                             throw IllegalArgumentException("Collection $config can not be null.")
@@ -64,12 +68,18 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                             throw IllegalArgumentException("Map $config can not be null.")
                         }
                     } else {
-                        if ((value == null && annotation.required) || value?.toBoolean() == true) {
+                        if (value != null || annotation.required) {
                             val configuration = withPrefix("$config.")
+                            val type = if (value.isNullOrBlank()) fieldType else Class.forName(value)
                             if (fieldValue == null) {
-                                field.set(obj, configuration.get(fieldType))
+                                field.set(obj, configuration.get(type))
                             } else {
-                                configuration.refresh(fieldValue)
+                                if (type.isAssignableFrom(fieldValue.javaClass)) {
+                                    configuration.refresh(fieldValue)
+                                } else {
+                                    field.set(obj, configuration.get(type))
+                                    //TODO an error?
+                                }
                             }
                         }
                     }
@@ -84,7 +94,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
         }
     }
 
-    private fun <T> parse(fieldType: Class<T>, value: String, encrypted: Encrypted? = null) : T {
+    private fun <T: Any> parse(fieldType: Class<T>, value: String, encrypted: Encrypted? = null) : T {
         return (if (fieldType.isEnum) {
             getEnumValue(fieldType, value)
         } else {
@@ -108,7 +118,13 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                 URL::class.java -> URL(value)
 
                 else -> {
-                    throw IllegalArgumentException("Can not parse $fieldType.")
+                    val type = properties["$value"]?.let {
+                        Class.forName(it)
+                    }?: fieldType
+
+                    Preconditions.checkArgument(fieldType.isAssignableFrom(type))
+
+                    withPrefix("$value.").get(type)
                 }
             }
         }) as T
@@ -123,6 +139,9 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
         }
     }
 
+    /**
+     * Filter k/v pairs starts with prefix, and remove the prefix, to a new map.
+     */
     private fun extract(prefix: String, properties: Map<String, String>) : HashMap<String, String> {
         val newProps = HashMap<String, String>()
         properties.filter {
@@ -134,23 +153,24 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
     }
 
     private fun withPrefix(prefix: String): Configuration {
-        return Configuration(extract(prefix, properties), base + prefix)
+        return Configuration(extract(prefix, properties)).also { it.base = base + prefix }
     }
 
     private fun refreshMap(genericType: Type, config: MutableMap<Any, Any>) {
         config.clear()
         if (genericType is ParameterizedType) {
             val typeArguments = genericType.actualTypeArguments
-            properties.forEach { key, value ->
+            properties.filter { !it.key.contains('.') }.forEach { (key, value) ->
                 val keyClass = typeArguments[0] as Class<*>
                 val valueType = typeArguments[1]
 
                 if (valueType is Class<*>) {
-                    if (isPlainType(valueType)) {
+                    if (isSimpleType(valueType)) {
                         config[parse(keyClass, key)] = parse(valueType, value)
                     } else {
                         val prefix = key.substringBefore(".")
-                        config[parse(keyClass, prefix)] = withPrefix("$prefix.").get(valueType)
+                        val type = if (value.isNotBlank()) Class.forName(value) else valueType
+                        config[parse(keyClass, prefix)] = withPrefix("$prefix.").get(type)
                     }
                 } else {
                     val valueType = valueType as ParameterizedType
