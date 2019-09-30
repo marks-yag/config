@@ -134,6 +134,7 @@ class ConfigurationTest {
         }
 
         val config = EndpointConfig()
+        //TODO add check of config
         export(EndpointConfig::class).let { result ->
             exportAsProperties(result, System.out)
             result["address"].let {
@@ -149,6 +150,20 @@ class ConfigurationTest {
                 assertTrue(it.annotation.required)
             }
         }
+    }
+
+    @Test
+    fun testSubType() {
+        mapOf(
+            "store" to LocalStore::class.java.name,
+            "store.local-addr" to "foo"
+        ).config(SubTypeConfig::class).let {
+            it.store.let {
+                assertTrue(it is LocalStore)
+                assertEquals("foo", it.localAddr)
+            }
+        }
+        //TODO check export
     }
 
     @Test
@@ -248,7 +263,7 @@ class ConfigurationTest {
     fun testNest() {
         mapOf(
                 "enum.mode" to Mode.CLUSTER.toString(),
-                "bool" to "true",
+                "bool" to "",
                 "bool.auth" to "false"
         ).config(NestConfig::class).let { nest ->
             nest.enum.let {

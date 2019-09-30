@@ -56,6 +56,13 @@ class EndpointConfig {
 
 }
 
+class SubTypeConfig {
+
+    @Value(required = true)
+    lateinit var store: Store
+
+}
+
 class CollectionConfig {
 
     @Value("options", required = true)

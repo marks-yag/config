@@ -68,12 +68,18 @@ class Configuration(private val properties: Map<String, String>) {
                             throw IllegalArgumentException("Map $config can not be null.")
                         }
                     } else {
-                        if ((value == null && annotation.required) || value?.toBoolean() == true) {
+                        if (value != null || annotation.required) {
                             val configuration = withPrefix("$config.")
+                            val type = if (value.isNullOrBlank()) fieldType else Class.forName(value)
                             if (fieldValue == null) {
-                                field.set(obj, configuration.get(fieldType))
+                                field.set(obj, configuration.get(type))
                             } else {
-                                configuration.refresh(fieldValue)
+                                if (type.isAssignableFrom(fieldValue.javaClass)) {
+                                    configuration.refresh(fieldValue)
+                                } else {
+                                    field.set(obj, configuration.get(type))
+                                    //TODO an error?
+                                }
                             }
                         }
                     }
