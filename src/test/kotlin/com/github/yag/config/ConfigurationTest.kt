@@ -6,12 +6,7 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
 import java.util.Properties
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class ConfigurationTest {
 
@@ -313,9 +308,21 @@ class ConfigurationTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun testMissing() {
-        Properties().config(StringConfig::class)
+        try {
+            Properties().config(StringConfig::class)
+            fail("Check missing failed.")
+        } catch (e: IllegalArgumentException) {
+            assertEquals("username is required.", e.message)
+        }
+
+        try {
+            Properties().config(NestConfig::class)
+            fail("Check messing failed.")
+        } catch (e: IllegalArgumentException) {
+            assertEquals("enum.mode is required.", e.message)
+        }
     }
 
     @Test

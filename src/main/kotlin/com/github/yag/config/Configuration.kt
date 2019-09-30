@@ -13,13 +13,16 @@ import java.util.Properties
 import kotlin.collections.HashMap
 import kotlin.reflect.KClass
 
-class Configuration @JvmOverloads constructor(private val properties: Map<String, String>, private val base: String = "") {
+class Configuration(private val properties: Map<String, String>) {
 
-    constructor(properties: Properties, base: String = "") : this(HashMap<String, String>().apply {
+    // Used for get absolute key.
+    private var base = ""
+
+    constructor(properties: Properties) : this(HashMap<String, String>().apply {
         properties.stringPropertyNames().forEach {
             put(it, properties.getProperty(it))
         }
-    }, base)
+    })
 
     fun <T : Any> refresh(obj: T) {
         getDeclaredFields(obj.javaClass).forEach { field ->
@@ -44,7 +47,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                 if (config.isNotEmpty()) {
                     val value = properties[config]
 
-                    if (isPlainType(fieldType)) {
+                    if (isSimpleType(fieldType)) {
                         checkRequired(value, annotation)
                         value?.let {
                             field.set(obj, parse(fieldType, it, encrypted))
@@ -130,6 +133,9 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
         }
     }
 
+    /**
+     * Filter k/v pairs starts with prefix, and remove the prefix, to a new map.
+     */
     private fun extract(prefix: String, properties: Map<String, String>) : HashMap<String, String> {
         val newProps = HashMap<String, String>()
         properties.filter {
@@ -141,7 +147,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
     }
 
     private fun withPrefix(prefix: String): Configuration {
-        return Configuration(extract(prefix, properties), base + prefix)
+        return Configuration(extract(prefix, properties)).also { it.base = base + prefix }
     }
 
     private fun refreshMap(genericType: Type, config: MutableMap<Any, Any>) {
@@ -153,7 +159,7 @@ class Configuration @JvmOverloads constructor(private val properties: Map<String
                 val valueType = typeArguments[1]
 
                 if (valueType is Class<*>) {
-                    if (isPlainType(valueType)) {
+                    if (isSimpleType(valueType)) {
                         config[parse(keyClass, key)] = parse(valueType, value)
                     } else {
                         val prefix = key.substringBefore(".")
