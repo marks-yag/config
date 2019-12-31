@@ -36,7 +36,7 @@ internal fun export(
     clazz: Class<*>,
     prefix: String,
     map: MutableMap<String, Item>,
-    instance: Any = clazz.newInstance(),
+    instance: Any = clazz.getDeclaredConstructor().newInstance(),
     required: Boolean = true
 ) {
     getDeclaredFields(clazz).forEach { field ->
@@ -63,7 +63,7 @@ internal fun export(
                         map[configName] = Item(fieldValue, annotation, required && annotation.required)
                     }
                     fieldValue is Map<*, *> -> {
-                        fieldValue.forEach { any, u ->
+                        fieldValue.forEach { (any, u) ->
                             map["$configName.$any"] = Item(u!!, annotation, required && annotation.required)
                         }
                     }
@@ -80,7 +80,7 @@ internal fun export(
 
 internal fun exportAsProperties(map: Map<String, Item>, out: OutputStream) {
     val ps = PrintStream(out)
-    map.forEach { key, value ->
+    map.forEach { (key, value) ->
         exportDesc(value.annotation, ps)
         if (!value.required) {
             ps.print("#")
