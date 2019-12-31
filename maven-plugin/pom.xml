@@ -7,7 +7,7 @@
     <groupId>com.github.marks-yag</groupId>
     <artifactId>config-maven-plugin</artifactId>
     <url>https://github.com/marks-yag/config</url>
-    <version>0.9.2</version>
+    <version>0.9.3</version>
     <packaging>maven-plugin</packaging>
 
     <name>Config Maven Plugin</name>
@@ -19,7 +19,7 @@
     <parent>
         <groupId>com.github.marks-yag</groupId>
         <artifactId>config</artifactId>
-        <version>0.9.2</version>
+        <version>0.9.3</version>
     </parent>
 
     <properties>
@@ -93,7 +93,7 @@
         <dependency>
             <groupId>com.github.marks-yag</groupId>
             <artifactId>config-core</artifactId>
-            <version>0.9.2</version>
+            <version>0.9.3</version>
         </dependency>
 
         <dependency>
