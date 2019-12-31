@@ -118,7 +118,7 @@ class RemoteStore : Store {
 
 class NestConfig {
 
-    @Value("enum", required = true)
+    @Value("enum")
     var enum = EnumConfig()
 
     @Value("bool")

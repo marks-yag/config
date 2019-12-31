@@ -262,12 +262,12 @@ class ConfigurationTest {
     @Test
     fun testNest() {
         mapOf(
-            "enum.mode" to Mode.CLUSTER.toString(),
+            "enum.mode" to Mode.SINGLE.toString(),
             "bool" to "",
             "bool.auth" to "false"
         ).config(NestConfig::class).let { nest ->
             nest.enum.let {
-                assertEquals(Mode.CLUSTER, it.mode)
+                assertEquals(Mode.SINGLE, it.mode)
             }
             nest.bool.let {
                 assertNotNull(it)
@@ -289,7 +289,7 @@ class ConfigurationTest {
                 assertNotNull(it)
                 assertEquals(config.enum.mode, it.value)
                 assertTrue(it.annotation.required)
-                assertTrue(it.required)
+                assertFalse(it.required)
             }
 
             result["bool.auth"].let {
@@ -330,13 +330,6 @@ class ConfigurationTest {
             fail("Check missing failed.")
         } catch (e: IllegalArgumentException) {
             assertEquals("username is required.", e.message)
-        }
-
-        try {
-            Properties().config(NestConfig::class)
-            fail("Check messing failed.")
-        } catch (e: IllegalArgumentException) {
-            assertEquals("enum.mode is required.", e.message)
         }
     }
 

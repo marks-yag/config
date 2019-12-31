@@ -38,7 +38,7 @@ class Configuration(private val properties: Map<String, String>) {
         }
     })
 
-    fun <T : Any> refresh(obj: T) {
+    private fun <T : Any> refresh(obj: T) {
         getDeclaredFields(obj.javaClass).forEach { field ->
             field.isAccessible = true
 
@@ -86,7 +86,7 @@ class Configuration(private val properties: Map<String, String>) {
                             throw IllegalArgumentException("Map $config can not be null.")
                         }
                     } else {
-                        if (value != null || annotation.required) {
+                        if (value != null || fieldValue != null || annotation.required) {
                             val configuration = withPrefix("$config.")
                             val type = if (value.isNullOrBlank()) fieldType else Class.forName(value)
                             if (fieldValue == null) {
