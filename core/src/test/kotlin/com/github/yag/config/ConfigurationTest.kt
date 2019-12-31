@@ -1,6 +1,7 @@
 package com.github.yag.config
 
 import com.github.yag.crypto.AESCrypto
+import com.github.yag.crypto.toBase64
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
@@ -13,7 +14,7 @@ class ConfigurationTest {
     fun testString() {
         mapOf(
             "username" to "mark",
-            "password" to AESCrypto("foo").encryptUTFToBase64("123")
+            "password" to AESCrypto("foo").encrypt("123".toByteArray()).toBase64()
         ).config(StringConfig::class).let {
             assertEquals("mark", it.username)
             assertEquals("123", it.password)
@@ -350,5 +351,6 @@ class ConfigurationTest {
         assertEquals("http://127.0.0.1:9527", valueToText(URL("http://127.0.0.1:9527")))
         assertEquals("mailto:yag@github.com", valueToText(URI("mailto:yag@github.com")))
         assertEquals("1,2,3", valueToText(listOf(1, 2, 3)))
+        assertEquals(BooleanConfig::class.java.name, valueToText(BooleanConfig()))
     }
 }

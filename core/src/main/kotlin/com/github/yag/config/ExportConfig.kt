@@ -105,15 +105,17 @@ internal fun escape(value: String): String {
 }
 
 internal fun <T : Any> valueToText(value: T?): String {
-    return when (value) {
-        is InetSocketAddress -> "${value.hostString}:${value.port}"
-        is Collection<*> -> {
+    return when {
+        value == null -> ""
+        value is InetSocketAddress -> "${value.hostString}:${value.port}"
+        value is Collection<*> -> {
             (value as Collection<*>).joinToString(",") {
-                escape(it.toString())
+                valueToText(it)
             }
         }
-        else -> {
-            escape(value.toString())
+        isSimpleType(value.javaClass) -> escape(value.toString())
+        else  -> {
+            value.javaClass.name
         }
     }
 }

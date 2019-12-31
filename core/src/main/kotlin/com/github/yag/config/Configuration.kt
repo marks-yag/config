@@ -1,6 +1,7 @@
 package com.github.yag.config
 
 import com.github.yag.crypto.AESCrypto
+import com.github.yag.crypto.decodeBase64
 import com.github.yag.crypto.toUtf8
 import com.google.common.base.CaseFormat
 import com.google.common.base.Preconditions
@@ -118,7 +119,7 @@ class Configuration(private val properties: Map<String, String>) {
             when (fieldType) {
                 String::class.java -> {
                     if (encrypted != null) {
-                        AESCrypto(encrypted.key).decrypt(value.toUtf8()).toUtf8()
+                        AESCrypto(encrypted.key).decrypt(value.decodeBase64()).toUtf8()
                     } else {
                         value
                     }
