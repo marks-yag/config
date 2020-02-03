@@ -39,6 +39,13 @@ class Configuration(private val properties: Map<String, String>) {
     })
 
     private fun <T : Any> refresh(obj: T) {
+        val initMethod = getDeclaredMethods(obj.javaClass).singleOrNull() {
+            it.getAnnotationsByType(Init::class.java) != null
+        }
+        initMethod?.let {
+            check(it.parameterCount == 0)
+        }
+
         getDeclaredFields(obj.javaClass).forEach { field ->
             field.isAccessible = true
 
@@ -104,6 +111,8 @@ class Configuration(private val properties: Map<String, String>) {
                 }
             }
         }
+
+        initMethod?.invoke(obj)
     }
 
     private fun checkRequired(value: Any?, annotation: Value) {

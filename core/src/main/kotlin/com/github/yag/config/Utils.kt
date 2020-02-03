@@ -2,6 +2,7 @@ package com.github.yag.config
 
 import com.google.common.primitives.Primitives
 import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
@@ -14,6 +15,16 @@ internal fun getDeclaredFields(type: Class<*>, fields: MutableCollection<Field> 
         }
     }
     return fields
+}
+
+internal fun getDeclaredMethods(type: Class<*>, methods: MutableCollection<Method> = ArrayList()): Collection<Method> {
+    if (type != Object::class.java) {
+        methods.addAll(type.declaredMethods)
+        type.superclass?.let {
+            getDeclaredMethods(it, methods)
+        }
+    }
+    return methods
 }
 
 internal fun isSimpleType(fieldType: Class<*>) =
