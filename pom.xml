@@ -7,7 +7,7 @@
     <groupId>com.github.marks-yag</groupId>
     <artifactId>config</artifactId>
     <url>https://github.com/marks-yag/config</url>
-    <version>0.9.3</version>
+    <version>0.9.4</version>
     <packaging>pom</packaging>
 
     <name>Config</name>
