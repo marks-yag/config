@@ -1,6 +1,6 @@
 package com.github.yag.config.maven
 
-import com.github.yag.config.export
+import com.github.yag.config.ExportConfig.export
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
