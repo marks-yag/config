@@ -19,7 +19,8 @@ import kotlin.reflect.KClass
 object ExportConfig {
 
     @JvmStatic
-    fun export(clazz: Class<*>, out: PrintStream) {
+    @JvmOverloads
+    fun export(clazz: Class<*>, instance: Any = clazz.getDeclaredConstructor().newInstance(), out: PrintStream) {
         val map = LinkedHashMap<String, Item>()
         export(clazz, "", map)
         exportAsProperties(map, out)
@@ -27,7 +28,7 @@ object ExportConfig {
 
     @JvmStatic
     @JvmOverloads
-    fun export(clazz: Class<*>, instance: Any = clazz.getDeclaredConstructor().newInstance()): Map<String, Item> {
+    internal fun export(clazz: Class<*>, instance: Any = clazz.getDeclaredConstructor().newInstance()): Map<String, Item> {
         return TreeMap<String, Item>().also {
             export(clazz, "", it, instance)
         }
