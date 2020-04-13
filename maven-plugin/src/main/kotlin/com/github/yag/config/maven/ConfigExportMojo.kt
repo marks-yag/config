@@ -1,6 +1,7 @@
 package com.github.yag.config.maven
 
 import com.github.yag.config.ExportConfig.export
+import com.github.yag.config.Profile
 import org.apache.maven.plugin.AbstractMojo
 import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
@@ -36,7 +37,14 @@ class ConfigExportMojo : AbstractMojo() {
         )
 
         File(outputPath).outputStream().use {
-            export(classLoader.loadClass(configClass), PrintStream(it))
+            val clazz = classLoader.loadClass(configClass)
+            if (Profile::class.java.isAssignableFrom(clazz)) {
+                val config = (clazz.getDeclaredConstructor().newInstance() as Profile).getConfigProfile()
+                val configClass = config.javaClass
+                export(configClass, config, PrintStream(it))
+            } else {
+                export(clazz, out = PrintStream(it))
+            }
         }
     }
 
