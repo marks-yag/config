@@ -22,7 +22,7 @@ object ExportConfig {
     @JvmOverloads
     fun export(clazz: Class<*>, instance: Any = clazz.getDeclaredConstructor().newInstance(), out: PrintStream) {
         val map = LinkedHashMap<String, Item>()
-        export(clazz, "", map)
+        export(clazz, "", map, instance)
         exportAsProperties(map, out)
     }
 
