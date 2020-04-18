@@ -48,8 +48,9 @@ object ExportConfig {
         getDeclaredFields(clazz).forEach { field ->
             field.isAccessible = true
             val fieldType = field.type
+            val rawFieldValue = field.get(instance)
             val fieldValue =
-                field.get(instance) ?: (fieldType.constructors.singleOrNull { it.parameterCount == 0 }?.newInstance()
+                rawFieldValue ?: (fieldType.constructors.singleOrNull { it.parameterCount == 0 }?.newInstance()
                     ?: "") //TODO maybe let it null is better.
             val annotation = field.getAnnotation(Value::class.java)
 
@@ -74,7 +75,7 @@ object ExportConfig {
                             }
                         }
                         else -> {
-                            export(fieldType, "$configName.", map, fieldValue, required && annotation.required)
+                            export(fieldType, "$configName.", map, fieldValue, (required && annotation.required) || rawFieldValue != null)
                         }
                     }
                 } else {
@@ -115,7 +116,7 @@ object ExportConfig {
             value == null -> ""
             value is InetSocketAddress -> "${value.hostString}:${value.port}"
             value is Collection<*> -> {
-                (value as Collection<*>).joinToString(",") {
+                value.joinToString(",") {
                     valueToText(it)
                 }
             }

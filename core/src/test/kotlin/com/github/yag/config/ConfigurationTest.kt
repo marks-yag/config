@@ -292,7 +292,7 @@ class ConfigurationTest {
                 assertNotNull(it)
                 assertEquals(config.enum.mode, it.value)
                 assertTrue(it.annotation.required)
-                assertFalse(it.required)
+                assertTrue(it.required)
             }
 
             result["bool.auth"].let {
