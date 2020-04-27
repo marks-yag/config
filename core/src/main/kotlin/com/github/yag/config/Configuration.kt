@@ -4,7 +4,6 @@ import com.github.yag.crypto.AESCrypto
 import com.github.yag.crypto.decodeBase64
 import com.github.yag.crypto.toUtf8
 import com.google.common.base.CaseFormat
-import com.google.common.base.Preconditions
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.net.InetSocketAddress
@@ -149,7 +148,7 @@ class Configuration(private val properties: Map<String, String>) {
                         Class.forName(it)
                     } ?: fieldType
 
-                    Preconditions.checkArgument(fieldType.isAssignableFrom(type))
+                    require(fieldType.isAssignableFrom(type))
 
                     withPrefix("$value.").get(type)
                 }
