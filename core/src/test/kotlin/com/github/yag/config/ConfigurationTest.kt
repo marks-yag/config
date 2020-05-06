@@ -212,7 +212,7 @@ class ConfigurationTest {
 
     @Test
     fun testMap() {
-        mapOf(
+        val map = mapOf(
             "options.mark" to Options.Encryption.toString(),
             "options.guile" to setOf(Options.Compression, Options.Indexing).joinToString(","),
             "map.first" to "",
@@ -223,7 +223,10 @@ class ConfigurationTest {
             "stores.cold" to RemoteStore::class.java.name,
             "stores.hot.local-addr" to "foo",
             "stores.cold.remote-addr" to "bar"
-        ).config(MapConfig::class).let {
+        )
+
+        val config = map.config(MapConfig::class)
+        config.let {
             assertEquals(2, it.options.size)
             assertEquals(setOf(Options.Encryption), it.options["mark"])
             assertEquals(setOf(Options.Compression, Options.Indexing), it.options["guile"])
@@ -241,20 +244,19 @@ class ConfigurationTest {
             }
         }
 
-        val config = MapConfig()
-        export(MapConfig::class).let { result ->
+        export(MapConfig::class.java, config).let { result ->
             exportAsProperties(result, System.out)
-            result["options.test"].let {
+            result["options.guile"].let {
                 assertNotNull(it)
-                val set = config.options["test"]
+                val set = config.options["guile"]
                 assertNotNull(set)
                 assertEquals(set, it.value)
                 assertFalse(it.annotation.required)
             }
 
-            result["options.prod"].let {
+            result["options.mark"].let {
                 assertNotNull(it)
-                val set = config.options["prod"]
+                val set = config.options["mark"]
                 assertNotNull(set)
                 assertEquals(set, it.value)
                 assertFalse(it.annotation.required)

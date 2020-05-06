@@ -70,6 +70,7 @@ object ExportConfig {
                             map[configName] = Item(fieldValue, annotation, required && annotation.required)
                         }
                         fieldValue is Map<*, *> -> {
+                            map["$configName"] = Item(fieldValue.keys, annotation, required && annotation.required)
                             fieldValue.forEach { (any, u) ->
                                 map["$configName.$any"] = Item(u!!, annotation, required && annotation.required)
                             }
