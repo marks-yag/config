@@ -7,7 +7,7 @@
     <groupId>com.github.marks-yag</groupId>
     <artifactId>config-core</artifactId>
     <url>https://github.com/marks-yag/config</url>
-    <version>0.10.2</version>
+    <version>0.11.0</version>
     <packaging>jar</packaging>
 
     <name>Config Core</name>
@@ -19,7 +19,7 @@
     <parent>
         <groupId>com.github.marks-yag</groupId>
         <artifactId>config</artifactId>
-        <version>0.10.2</version>
+        <version>0.11.0</version>
     </parent>
 
     <scm>
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>com.github.marks-yag</groupId>
             <artifactId>config-annotation</artifactId>
-            <version>0.10.2</version>
+            <version>0.11.0</version>
         </dependency>
 
         <dependency>
