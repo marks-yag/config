@@ -22,16 +22,6 @@
         <version>0.10.2</version>
     </parent>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.3.50</kotlin.version>
-        <kotlin.code.style>official</kotlin.code.style>
-        <junit.version>4.12</junit.version>
-
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-
     <scm>
         <connection>scm:git:git://github.com/marks-yag/config.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/marks-yag/config.git</developerConnection>
