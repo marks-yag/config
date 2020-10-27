@@ -82,6 +82,12 @@
 
         <dependency>
             <groupId>com.github.marks-yag</groupId>
+            <artifactId>config-annotation</artifactId>
+            <version>0.10.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.marks-yag</groupId>
             <artifactId>crypto</artifactId>
             <version>0.9.11</version>
         </dependency>

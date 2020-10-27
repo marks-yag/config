@@ -1,5 +1,6 @@
 package com.github.yag.config
 
+import com.github.yag.config.Value
 import com.google.common.base.CaseFormat
 import java.io.OutputStream
 import java.io.PrintStream

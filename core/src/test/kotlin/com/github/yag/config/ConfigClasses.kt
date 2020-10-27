@@ -1,5 +1,7 @@
 package com.github.yag.config
 
+import com.github.yag.config.Encrypted
+import com.github.yag.config.Value
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
