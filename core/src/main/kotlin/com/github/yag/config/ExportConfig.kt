@@ -122,6 +122,7 @@ object ExportConfig {
                     valueToText(it)
                 }
             }
+            value is Enum<*> -> value.name
             isSimpleType(value.javaClass) -> escape(value.toString())
             else -> {
                 value.javaClass.name
