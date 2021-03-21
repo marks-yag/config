@@ -12,12 +12,8 @@ import java.net.URI
 import java.net.URL
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.collections.HashSet
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.collections.set
-import kotlin.math.log
 import kotlin.reflect.KClass
 
 class Configuration(private val properties: NestedKeyValueStore) {
@@ -53,46 +49,46 @@ class Configuration(private val properties: NestedKeyValueStore) {
                     }
                 }
 
-                if (config.isNotEmpty()) {
-                    val value = properties.getValue(config)
+                require(config.isNotEmpty())
 
-                    if (isSimpleType(fieldType)) {
-                        checkRequired(value, annotation)
-                        value?.let {
-                            field.set(obj, parse(fieldType, it, encrypted))
-                        }
-                    } else if (isCollectionType(fieldType)) {
-                        checkRequired(value, annotation)
-                        if (fieldValue != null) {
-                            if (value != null) {
-                                withPrefix(config).parseCollection(
-                                    genericFieldType as ParameterizedType,
-                                    value,
-                                    fieldValue
-                                )
-                            }
-                        } else {
-                            throw IllegalArgumentException("Collection $config can not be null.")
-                        }
-                    } else if (isMapType(fieldType)) {
-                        if (fieldType != null) {
-                            withPrefix(config).refreshMap(genericFieldType, fieldValue as MutableMap<Any, Any>)
-                        } else {
-                            throw IllegalArgumentException("Map $config can not be null.")
+                val value = properties.getValue(config)
+
+                if (isSimpleType(fieldType)) {
+                    checkRequired(value, annotation)
+                    value?.let {
+                        field.set(obj, parse(fieldType, it, encrypted))
+                    }
+                } else if (isCollectionType(fieldType)) {
+                    checkRequired(value, annotation)
+                    if (fieldValue != null) {
+                        if (value != null) {
+                            withPrefix(config).parseCollection(
+                                genericFieldType as ParameterizedType,
+                                value,
+                                fieldValue
+                            )
                         }
                     } else {
-                        if (value != null || fieldValue != null || annotation.required) {
-                            val configuration = withPrefix(config)
-                            val type = if (value.isNullOrBlank()) fieldType else Class.forName(value)
-                            if (fieldValue == null) {
-                                field.set(obj, configuration.get(type))
+                        throw IllegalArgumentException("Collection $config can not be null.")
+                    }
+                } else if (isMapType(fieldType)) {
+                    if (fieldType != null) {
+                        withPrefix(config).refreshMap(genericFieldType, fieldValue as MutableMap<Any, Any>)
+                    } else {
+                        throw IllegalArgumentException("Map $config can not be null.")
+                    }
+                } else {
+                    if (value != null || fieldValue != null || annotation.required) {
+                        val configuration = withPrefix(config)
+                        val type = if (value.isNullOrBlank()) fieldType else Class.forName(value)
+                        if (fieldValue == null) {
+                            field.set(obj, configuration.get(type))
+                        } else {
+                            if (type.isAssignableFrom(fieldValue.javaClass)) {
+                                configuration.refresh(fieldValue)
                             } else {
-                                if (type.isAssignableFrom(fieldValue.javaClass)) {
-                                    configuration.refresh(fieldValue)
-                                } else {
-                                    field.set(obj, configuration.get(type))
-                                    //TODO an error?
-                                }
+                                field.set(obj, configuration.get(type))
+                                //TODO an error?
                             }
                         }
                     }

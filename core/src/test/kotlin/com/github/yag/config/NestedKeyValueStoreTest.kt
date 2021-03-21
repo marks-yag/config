@@ -63,7 +63,7 @@ class NestedKeyValueStoreTest {
         override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
             return listOf(
                 ConfigLoader.load(Format.INI),
-                ConfigLoader.load(Format.TOML)
+                //ConfigLoader.load(Format.TOML)
             ).map { invocationContext(it) }.stream()
         }
 
@@ -78,21 +78,7 @@ class NestedKeyValueStoreTest {
         override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
             return listOf(
                 ConfigLoader.load(Format.INI, "normal.ini"),
-                ConfigLoader.load(Format.TOML)
-            ).map { invocationContext(it) }.stream()
-        }
-
-        override fun supportsTestTemplate(context: ExtensionContext): Boolean {
-            return true
-        }
-
-    }
-
-    class DuplicatedNestedKeyValueStoreContextProvider : TestTemplateInvocationContextProvider {
-
-        override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
-            return listOf(
-                PropertiesKeyValueStore(emptyMap())
+                //ConfigLoader.load(Format.TOML)
             ).map { invocationContext(it) }.stream()
         }
 

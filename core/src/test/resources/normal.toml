@@ -1,0 +1,4 @@
+options=guile,mark
+[options]
+guile = [ "Indexing" , "Compression" ]
+mark = [ "Encryption" ]

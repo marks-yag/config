@@ -23,6 +23,21 @@ class ConfigLoader private constructor() {
                 Format.getFormatByExtension(extension)
             }
 
+            return readAsStream(configFiles).use { input ->
+                when (realFormat) {
+                    Format.TOML -> {
+                        TomlKeyValueStore(Toml.parse(input))
+                    }
+                    Format.INI -> {
+                        PropertiesKeyValueStore(Properties().apply {
+                            load(input)
+                        }.toStringMap())
+                    }
+                }
+            }
+        }
+
+        fun readAsStream(configFiles: Array<out String>) : InputStream {
             return configFiles.map {
                 val url = ConfigLoader::class.java.classLoader.getResource(it)
                 if (url != null) {
@@ -39,17 +54,6 @@ class ConfigLoader private constructor() {
                 }
             }.let {
                 SequenceInputStream(Collections.enumeration(it))
-            }.use { input ->
-                when (realFormat) {
-                    Format.TOML -> {
-                        TomlKeyValueStore(Toml.parse(input))
-                    }
-                    Format.INI -> {
-                        PropertiesKeyValueStore(Properties().apply {
-                            load(input)
-                        }.toStringMap())
-                    }
-                }
             }
         }
 

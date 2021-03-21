@@ -50,7 +50,7 @@ fun getEnumValue(type: Class<*>, enumValue: String): Any {
 fun Properties.toStringMap() : Map<String, String> {
     return TreeMap<String, String>().also { map ->
         stringPropertyNames().forEach { key ->
-            map.put(key, getProperty(key))
+            map[key] = getProperty(key)
         }
     }
 }
