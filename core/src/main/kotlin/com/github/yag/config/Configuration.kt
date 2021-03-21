@@ -4,6 +4,7 @@ import com.github.yag.crypto.AESCrypto
 import com.github.yag.crypto.decodeBase64
 import com.github.yag.crypto.toUtf8
 import com.google.common.base.CaseFormat
+import org.slf4j.LoggerFactory
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.net.InetSocketAddress
@@ -16,12 +17,12 @@ import kotlin.collections.HashSet
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
+import kotlin.math.log
 import kotlin.reflect.KClass
 
-class Configuration(private val properties: Map<String, String>) {
+class Configuration(private val properties: NestedKeyValueStore) {
 
-    // Used for get absolute key.
-    private var base = ""
+    constructor(properties: Map<String, String>) : this(PropertiesKeyValueStore(properties))
 
     constructor(properties: Properties) : this(HashMap<String, String>().apply {
         properties.stringPropertyNames().forEach {
@@ -57,7 +58,7 @@ class Configuration(private val properties: Map<String, String>) {
                 }
 
                 if (config.isNotEmpty()) {
-                    val value = properties[config]
+                    val value = properties.getValue(config)
 
                     if (isSimpleType(fieldType)) {
                         checkRequired(value, annotation)
@@ -68,7 +69,7 @@ class Configuration(private val properties: Map<String, String>) {
                         checkRequired(value, annotation)
                         if (fieldValue != null) {
                             if (value != null) {
-                                withPrefix("$config.").parseCollection(
+                                withPrefix(config).parseCollection(
                                     genericFieldType as ParameterizedType,
                                     value,
                                     fieldValue
@@ -79,13 +80,13 @@ class Configuration(private val properties: Map<String, String>) {
                         }
                     } else if (isMapType(fieldType)) {
                         if (fieldType != null) {
-                            withPrefix("$config.").refreshMap(genericFieldType, fieldValue as MutableMap<Any, Any>)
+                            withPrefix(config).refreshMap(genericFieldType, fieldValue as MutableMap<Any, Any>)
                         } else {
                             throw IllegalArgumentException("Map $config can not be null.")
                         }
                     } else {
                         if (value != null || fieldValue != null || annotation.required) {
-                            val configuration = withPrefix("$config.")
+                            val configuration = withPrefix(config)
                             val type = if (value.isNullOrBlank()) fieldType else Class.forName(value)
                             if (fieldValue == null) {
                                 field.set(obj, configuration.get(type))
@@ -108,7 +109,7 @@ class Configuration(private val properties: Map<String, String>) {
 
     private fun checkRequired(value: Any?, annotation: Value) {
         if (annotation.required && value == null) {
-            throw IllegalArgumentException("$base${annotation.config} is required.")
+            throw IllegalArgumentException("${properties.getFullKey(annotation.config)} is required.")
         }
     }
 
@@ -136,13 +137,13 @@ class Configuration(private val properties: Map<String, String>) {
                 URL::class.java -> URL(value)
 
                 else -> {
-                    val type = properties["$value"]?.let {
+                    val type = properties.getValue("$value")?.let {
                         Class.forName(it)
                     } ?: fieldType
 
                     require(fieldType.isAssignableFrom(type))
 
-                    withPrefix("$value.").get(type)
+                    withPrefix(value).get(type)
                 }
             }
         }) as T
@@ -157,28 +158,17 @@ class Configuration(private val properties: Map<String, String>) {
         }
     }
 
-    /**
-     * Filter k/v pairs starts with prefix, and remove the prefix, to a new map.
-     */
-    private fun extract(prefix: String, properties: Map<String, String>): HashMap<String, String> {
-        val newProps = HashMap<String, String>()
-        properties.filter {
-            (it.key).startsWith(prefix)
-        }.forEach {
-            newProps[it.key.substring(prefix.length)] = it.value
-        }
-        return newProps
-    }
-
     private fun withPrefix(prefix: String): Configuration {
-        return Configuration(extract(prefix, properties)).also { it.base = base + prefix }
+        return Configuration(properties.getSubStore(prefix))
     }
 
     private fun refreshMap(genericType: Type, config: MutableMap<Any, Any>) {
         config.clear()
+        LOG.debug("Refresh map, type: {}.", genericType)
         if (genericType is ParameterizedType) {
             val typeArguments = genericType.actualTypeArguments
-            properties.filter { !it.key.contains('.') }.forEach { (key, value) ->
+            properties.getEntries().forEach { (key, value) ->
+                LOG.debug("Refresh map: {} -> {}.", key, value)
                 val keyClass = typeArguments[0] as Class<*>
                 val valueType = typeArguments[1]
 
@@ -188,7 +178,7 @@ class Configuration(private val properties: Map<String, String>) {
                     } else {
                         val prefix = key.substringBefore(".")
                         val type = if (value.isNotBlank()) Class.forName(value) else valueType
-                        config[parse(keyClass, prefix)] = withPrefix("$prefix.").get(type)
+                        config[parse(keyClass, prefix)] = withPrefix(prefix).get(type)
                     }
                 } else {
                     val valueType = valueType as ParameterizedType
@@ -208,9 +198,13 @@ class Configuration(private val properties: Map<String, String>) {
     }
 
     fun <T : Any> get(clazz: Class<T>): T {
-        return clazz.newInstance().also {
+        return clazz.getConstructor().newInstance().also {
             refresh(it)
         }
+    }
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(Configuration::class.java)
     }
 }
 
