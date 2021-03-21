@@ -24,11 +24,7 @@ class Configuration(private val properties: NestedKeyValueStore) {
 
     constructor(properties: Map<String, String>) : this(PropertiesKeyValueStore(properties))
 
-    constructor(properties: Properties) : this(HashMap<String, String>().apply {
-        properties.stringPropertyNames().forEach {
-            put(it, properties.getProperty(it))
-        }
-    })
+    constructor(properties: Properties) : this(properties.toStringMap())
 
     private fun <T : Any> refresh(obj: T) {
         val initMethod = getDeclaredMethods(obj.javaClass).singleOrNull() {

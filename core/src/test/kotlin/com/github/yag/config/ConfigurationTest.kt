@@ -78,9 +78,11 @@ class ConfigurationTest {
         }
     }
 
-    @Test(expected = NumberFormatException::class)
+    @Test
     fun testIllegalNumber() {
-        mapOf("port" to "foo").config(NumberConfig::class)
+        assertFailsWith<java.lang.NumberFormatException> {
+            mapOf("port" to "foo").config(NumberConfig::class)
+        }
     }
 
     @Test

@@ -17,7 +17,7 @@ class ConfigLoader private constructor() {
 
         @JvmStatic
         @JvmOverloads
-        fun load(format: Format? = null, vararg configFiles: String): Properties {
+        fun load(format: Format? = null, vararg configFiles: String): NestedKeyValueStore {
             val realFormat = format?: run {
                 val extension = configFiles.map { it.substringAfterLast('.', "") }.toSet().single()
                 Format.getFormatByExtension(extension)
@@ -42,13 +42,12 @@ class ConfigLoader private constructor() {
             }.use { input ->
                 when (realFormat) {
                     Format.TOML -> {
-                        Toml.parse(input)
-                        TODO()
+                        TomlKeyValueStore(Toml.parse(input))
                     }
                     Format.INI -> {
-                        Properties().apply {
+                        PropertiesKeyValueStore(Properties().apply {
                             load(input)
-                        }
+                        }.toStringMap())
                     }
                 }
             }

@@ -6,6 +6,8 @@ import java.lang.reflect.Method
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
+import java.util.*
+import kotlin.collections.ArrayList
 
 internal fun getDeclaredFields(type: Class<*>, fields: MutableCollection<Field> = ArrayList()): Collection<Field> {
     if (type != Object::class.java) {
@@ -43,4 +45,12 @@ internal fun isMapType(fieldType: Class<*>) = Map::class.java.isAssignableFrom(f
 fun getEnumValue(type: Class<*>, enumValue: String): Any {
     val enumClz = type.enumConstants as Array<Enum<*>>
     return enumClz.first { it.name == enumValue }
+}
+
+fun Properties.toStringMap() : Map<String, String> {
+    return TreeMap<String, String>().also { map ->
+        stringPropertyNames().forEach { key ->
+            map.put(key, getProperty(key))
+        }
+    }
 }
