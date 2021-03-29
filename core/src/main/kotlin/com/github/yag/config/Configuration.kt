@@ -1,17 +1,13 @@
 package com.github.yag.config
 
-import com.github.yag.crypto.AESCrypto
-import com.github.yag.crypto.decodeBase64
-import com.github.yag.crypto.toUtf8
 import com.google.common.base.CaseFormat
 import org.slf4j.LoggerFactory
+import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import java.net.InetSocketAddress
-import java.net.URI
-import java.net.URL
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import kotlin.collections.set
 import kotlin.reflect.KClass
@@ -39,6 +35,7 @@ class Configuration(private val properties: NestedKeyValueStore) {
             val fieldValue: Any? = field.get(obj)
             val annotation: Value? = field.getAnnotation(Value::class.java)
             val encrypted: Encrypted? = field.getAnnotation(Encrypted::class.java)
+            val encryptedKey: String? = encrypted?.key
 
             if (annotation != null) {
                 val config = annotation.config.let {
@@ -51,52 +48,92 @@ class Configuration(private val properties: NestedKeyValueStore) {
 
                 require(config.isNotEmpty())
 
-                val value = properties.getValue(config)
+                var result = parseField(fieldType, genericFieldType, config, fieldValue, encryptedKey)
+                checkRequired(result, annotation)
 
-                if (isSimpleType(fieldType)) {
-                    checkRequired(value, annotation)
-                    value?.let {
-                        field.set(obj, parse(fieldType, it, encrypted))
-                    }
-                } else if (isCollectionType(fieldType)) {
-                    checkRequired(value, annotation)
-                    if (fieldValue != null) {
-                        if (value != null) {
-                            withPrefix(config).parseCollection(
-                                genericFieldType as ParameterizedType,
-                                value,
-                                fieldValue
-                            )
-                        }
-                    } else {
-                        throw IllegalArgumentException("Collection $config can not be null.")
-                    }
-                } else if (isMapType(fieldType)) {
-                    if (fieldType != null) {
-                        withPrefix(config).refreshMap(genericFieldType, fieldValue as MutableMap<Any, Any>)
-                    } else {
-                        throw IllegalArgumentException("Map $config can not be null.")
-                    }
-                } else {
-                    if (value != null || fieldValue != null || annotation.required) {
-                        val configuration = withPrefix(config)
-                        val type = if (value.isNullOrBlank()) fieldType else Class.forName(value)
-                        if (fieldValue == null) {
-                            field.set(obj, configuration.get(type))
-                        } else {
-                            if (type.isAssignableFrom(fieldValue.javaClass)) {
-                                configuration.refresh(fieldValue)
-                            } else {
-                                field.set(obj, configuration.get(type))
-                                //TODO an error?
-                            }
-                        }
-                    }
-                }
+                result?.let { field.set(obj, result) }
             }
         }
 
         initMethod?.invoke(obj)
+    }
+
+    private fun parseField(
+        fieldType: Class<*>,
+        genericFieldType: Type,
+        config: String,
+        fieldValue: Any?,
+        encryptedKey: String?
+    ): Any? {
+        LOG.debug("Field type: {}, generic field type: {}, config: {}", fieldType, genericFieldType, config)
+        var result: Any? = fieldValue
+        when {
+            isCollectionType(fieldType) -> {
+                result = parseCollection(genericFieldType, config, fieldType, (result?: kotlin.run { getCollection(fieldType as Class<MutableCollection<Any>>) }) as MutableCollection<Any>)
+            }
+            isMapType(fieldType) -> {
+                if (result == null) {
+                    result = getMap(fieldType as Class<MutableMap<Any, Any>>)
+                }
+                Configuration(properties.getSubStore(config)).refreshMap(
+                    genericFieldType,
+                    result as MutableMap<Any, Any>
+                )
+            }
+            else -> {
+                result = parse(fieldType, config, fieldValue, encryptedKey)
+            }
+        }
+        return result
+    }
+
+    private fun parseCollection(
+        genericFieldType: Type,
+        config: String,
+        fieldType: Class<*>,
+        result: MutableCollection<Any>
+    ): MutableCollection<Any>? {
+        LOG.debug("Parse collection, generic field type: {}, config: {}, field type: {}.", genericFieldType, config, fieldType)
+        val elementType = (genericFieldType as ParameterizedType).actualTypeArguments[0] as Class<*>
+
+        return properties.readCollection(config)?.let { collection ->
+            result.addAll(collection.map {
+                if (isSimpleType(elementType)) {
+                    SimpleObjectParser.parse(elementType, it)
+                } else {
+                    val type = properties.getSubStore(config).getValue(it)?.run {
+                        Class.forName(this)
+                    } ?: elementType
+                    getSubConfig(config).getSubConfig(it).get(type)
+                }
+            })
+            result
+        }
+    }
+
+    private fun parse(
+        fieldType: Class<*>,
+        config: String,
+        fieldValue: Any?,
+        encryptedKey: String? = null
+    ): Any? {
+        if (isSimpleType(fieldType)) {
+            return properties.getValue(config, fieldType, encryptedKey)
+        } else {
+            val implClass = properties.getValue(config, String::class.java)
+            return if (implClass != null || fieldValue != null) {
+                val configuration = getSubConfig(config)
+                val type = if (implClass.isNullOrBlank()) fieldType else Class.forName(implClass)
+                if (fieldValue == null) {
+                    configuration.get(type)
+                } else {
+                    configuration.refresh(fieldValue)
+                    fieldValue
+                }
+            } else {
+                null
+            }
+        }
     }
 
     private fun checkRequired(value: Any?, annotation: Value) {
@@ -105,87 +142,60 @@ class Configuration(private val properties: NestedKeyValueStore) {
         }
     }
 
-    private fun <T : Any> parse(fieldType: Class<T>, value: String, encrypted: Encrypted? = null): T {
-        return (if (fieldType.isEnum) {
-            getEnumValue(fieldType, value)
-        } else {
-            when (fieldType) {
-                String::class.java -> {
-                    if (encrypted != null) {
-                        AESCrypto(encrypted.key).decrypt(value.decodeBase64()).toUtf8()
-                    } else {
-                        value
-                    }
-                }
-                Int::class.java -> value.toInt()
-                Long::class.java -> value.toLong()
-                Float::class.java -> value.toFloat()
-                Double::class.java -> value.toDouble()
-                Short::class.java -> value.toShort()
-                Byte::class.java -> value.toByte()
-                Boolean::class.java -> value.toBoolean()
-                InetSocketAddress::class.java -> value.split(":").let { InetSocketAddress(it[0], it[1].toInt()) }
-                URI::class.java -> URI(value)
-                URL::class.java -> URL(value)
-
-                else -> {
-                    val type = properties.getValue("$value")?.let {
-                        Class.forName(it)
-                    } ?: fieldType
-
-                    require(fieldType.isAssignableFrom(type))
-
-                    withPrefix(value).get(type)
-                }
-            }
-        }) as T
+    private fun getSubConfig(key: String): Configuration {
+        return Configuration(properties.getSubStore(key))
     }
 
-    private fun parseCollection(genericType: ParameterizedType, value: String, fieldValue: Any) {
-        with(fieldValue as MutableCollection<Any>) {
-            clear()
-            value.split(",").forEach {
-                add(parse(genericType.actualTypeArguments[0] as Class<*>, it))
-            }
-        }
-    }
-
-    private fun withPrefix(prefix: String): Configuration {
-        return Configuration(properties.getSubStore(prefix))
-    }
-
-    private fun refreshMap(genericType: Type, config: MutableMap<Any, Any>) {
-        config.clear()
+    private fun refreshMap(genericType: Type, map: MutableMap<Any, Any>) {
+        map.clear()
         LOG.debug("Refresh map, type: {}.", genericType)
         if (genericType is ParameterizedType) {
             val typeArguments = genericType.actualTypeArguments
-            properties.getEntries().forEach { (key, value) ->
-                LOG.debug("Refresh map: {} -> {}.", key, value)
+            properties.getEntries().forEach { key ->
+                LOG.debug("Refresh map: {}.", key)
                 val keyClass = typeArguments[0] as Class<*>
                 val valueType = typeArguments[1]
 
                 if (valueType is Class<*>) {
-                    if (isSimpleType(valueType)) {
-                        config[parse(keyClass, key)] = parse(valueType, value)
-                    } else {
-                        val prefix = key.substringBefore(".")
-                        val type = if (value.isNotBlank()) Class.forName(value) else valueType
-                        config[parse(keyClass, prefix)] = withPrefix(prefix).get(type)
-                    }
+                    // Without parameterized type
+                    val value = properties.getValue(key)
+                    checkNotNull(value)
+                    val type = if (value.isNotBlank()) Class.forName(value) else valueType
+                    map[SimpleObjectParser.parse(keyClass, key, null)] = getSubConfig(key).get(type)
                 } else {
+                    // With parameterized type
                     val valueType = valueType as ParameterizedType
-                    val rawType = valueType.rawType as Class<*>
+                    val rawType = valueType.rawType as Class<MutableCollection<Any>>
 
-                    val collection: Collection<Any> = when {
-                        List::class.java.isAssignableFrom(rawType) -> ArrayList()
-                        Set::class.java.isAssignableFrom(rawType) -> HashSet()
-                        else -> throw IllegalArgumentException("Unsupported collection type: ${rawType.name}")
-                    }
-
-                    parseCollection(valueType, value, collection)
-                    config[parse(keyClass, key)] = collection
+                    val collection = parseField(rawType, valueType, key, null, null) as MutableCollection<Any>
+                    map[SimpleObjectParser.parse(keyClass, key)] = collection
                 }
             }
+        }
+    }
+
+    private fun getCollection(type: Class<MutableCollection<Any>>) : MutableCollection<Any> {
+        val modifier = type.modifiers
+        return if (Modifier.isAbstract(modifier) || Modifier.isInterface(modifier)) {
+            when(type) {
+                List::class.java -> ArrayList()
+                Set::class.java -> HashSet()
+                else -> throw IllegalArgumentException("Unsupported value type: ${type.name}")
+            }
+        } else {
+            type.getConstructor().newInstance()
+        }
+    }
+
+    private fun getMap(type: Class<MutableMap<Any, Any>>) : MutableMap<Any, Any> {
+        val modifier = type.modifiers
+        return if (Modifier.isAbstract(modifier) || Modifier.isInterface(modifier)) {
+            when(type) {
+                Map::class.java -> HashMap()
+                else -> throw IllegalArgumentException("Unsupported value type: ${type.name}")
+            }
+        } else {
+            type.getConstructor().newInstance()
         }
     }
 

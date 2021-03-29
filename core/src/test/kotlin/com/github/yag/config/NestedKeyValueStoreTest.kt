@@ -22,25 +22,19 @@ class NestedKeyValueStoreTest {
     @TestTemplate
     @ExtendWith(NormalNestedKeyValueStoreContextProvider::class)
     fun testGetEntries(store: NestedKeyValueStore) {
-        store.getEntries().let {
-            assertEquals(2, it.size)
-            assertTrue {
-                it.contains("options" to "guile,mark")
-            }
-            assertTrue {
-                it.contains("tag" to "prod,test")
-            }
-        }
+        assertEquals(setOf("size", "options", "tag"), store.getEntries())
     }
 
     @TestTemplate
     @ExtendWith(NormalNestedKeyValueStoreContextProvider::class)
     fun testGetValue(store: NestedKeyValueStore) {
-        assertEquals("guile,mark", store.getValue("options"))
+        assertEquals("5", store.getValue("size"))
         assertEquals("prod,test", store.getValue("tag"))
 
+        assertNull(store.getValue("not-exist"))
+
         assertFailsWith<IllegalArgumentException> {
-            store.getValue("options.guile")
+            store.getValue("tag.prod")
         }
     }
 
@@ -48,9 +42,10 @@ class NestedKeyValueStoreTest {
     @ExtendWith(NormalNestedKeyValueStoreContextProvider::class)
     fun testSubStore(store: NestedKeyValueStore) {
         store.getSubStore("options").let {
-            it.getEntries().let {
-                assertEquals(2, it.size)
-            }
+            assertEquals(setOf("prod", "test"), it.getEntries())
+            assertEquals("options.prod", it.getFullKey("prod"))
+            assertEquals("Encryption,Indexing,Compression", it.getValue("prod"))
+            assertEquals(setOf("Encryption", "Indexing", "Compression"), it.readCollection("prod")?.toSet())
         }
 
         assertFailsWith<IllegalArgumentException> {
@@ -63,7 +58,7 @@ class NestedKeyValueStoreTest {
         override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
             return listOf(
                 ConfigLoader.load(Format.INI),
-                //ConfigLoader.load(Format.TOML)
+                ConfigLoader.load(Format.TOML)
             ).map { invocationContext(it) }.stream()
         }
 
@@ -78,7 +73,7 @@ class NestedKeyValueStoreTest {
         override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
             return listOf(
                 ConfigLoader.load(Format.INI, "normal.ini"),
-                //ConfigLoader.load(Format.TOML)
+                ConfigLoader.load(Format.TOML, "normal.toml")
             ).map { invocationContext(it) }.stream()
         }
 

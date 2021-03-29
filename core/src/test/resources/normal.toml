@@ -1,4 +1,7 @@
-options=guile,mark
+size = 5
+
+tag = [ "prod", "test" ]
+
 [options]
-guile = [ "Indexing" , "Compression" ]
-mark = [ "Encryption" ]
+prod = [ "Encryption", "Indexing" , "Compression" ]
+test = [ "Encryption" ]

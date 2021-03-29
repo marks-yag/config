@@ -1,7 +1,5 @@
 package com.github.yag.config
 
-import java.lang.IllegalArgumentException
-
 enum class Format(private vararg val extensions: String) {
     TOML("toml"),
     INI("ini", "properties");
