@@ -42,9 +42,8 @@ internal fun isCollectionType(fieldType: Class<*>) = Collection::class.java.isAs
 
 internal fun isMapType(fieldType: Class<*>) = Map::class.java.isAssignableFrom(fieldType)
 
-fun getEnumValue(type: Class<*>, enumValue: String): Any {
-    val enumClz = type.enumConstants as Array<Enum<*>>
-    return enumClz.first { it.name == enumValue }
+fun getEnumValue(type: Class<*>, enumValue: String): Enum<*> {
+    return java.lang.Enum.valueOf(type as Class<Enum<*>>, enumValue)
 }
 
 fun Properties.toStringMap() : Map<String, String> {
