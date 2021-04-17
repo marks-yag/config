@@ -7,18 +7,18 @@ class PropertiesKeyValueStore(private val map: Map<String, String>, private val 
         return PropertiesKeyValueStore(map, prefix)
     }
 
-    override fun <T : Any> getValue(key: String, type: Class<T>, encryptedKey: String?): T? {
+    override fun getValue(key: String): String? {
         require(!key.contains('.')) {
             key
         }
         val fullKey = getFullKey(key)
         return map[fullKey]?.let {  value ->
-            SimpleObjectParser.parse(type, value, encryptedKey)
+            value
         }
     }
 
     override fun readCollection(key: String) : Collection<String>? {
-        val value = getValue(key, String::class.java, null)
+        val value = getValue(key)
         return value?.split(",")
     }
 

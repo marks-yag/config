@@ -17,10 +17,10 @@ class ConfigurationTest {
     fun testString() {
         mapOf(
             "username" to "mark",
-            "password" to AESCrypto("foo").encrypt("123".toByteArray()).toBase64()
+            "password" to ""
         ).config(StringConfig::class).let {
             assertEquals("mark", it.username)
-            assertEquals("123", it.password)
+            assertEquals("", it.password)
         }
 
         val config = StringConfig()

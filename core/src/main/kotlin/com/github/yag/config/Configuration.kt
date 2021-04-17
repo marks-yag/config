@@ -13,7 +13,7 @@ import kotlin.collections.HashSet
 import kotlin.collections.set
 import kotlin.reflect.KClass
 
-class Configuration(private val properties: NestedKeyValueStore) {
+class Configuration @JvmOverloads constructor(private val properties: NestedKeyValueStore, private val parser: SimpleObjectParser = SimpleObjectParser()) {
 
     constructor(properties: Map<String, String>) : this(PropertiesKeyValueStore(properties))
 
@@ -35,8 +35,6 @@ class Configuration(private val properties: NestedKeyValueStore) {
 
             val fieldValue: Any? = field.get(obj)
             val annotation: Value? = field.getAnnotation(Value::class.java)
-            val encrypted: Encrypted? = field.getAnnotation(Encrypted::class.java)
-            val encryptedKey: String? = encrypted?.key
 
             if (annotation != null) {
                 val config = annotation.config.let {
@@ -49,7 +47,7 @@ class Configuration(private val properties: NestedKeyValueStore) {
 
                 require(config.isNotEmpty())
 
-                var result = parseField(fieldType, genericFieldType, config, fieldValue, encryptedKey)
+                var result = parseField(fieldType, genericFieldType, config, fieldValue)
                 checkRequired(result, annotation)
 
                 result?.let { field.set(obj, result) }
@@ -63,8 +61,7 @@ class Configuration(private val properties: NestedKeyValueStore) {
         fieldType: Class<*>,
         genericFieldType: Type,
         config: String,
-        fieldValue: Any?,
-        encryptedKey: String?
+        fieldValue: Any?
     ): Any? {
         LOG.debug("Field type: {}, generic field type: {}, config: {}", fieldType, genericFieldType, config)
         var result: Any? = fieldValue
@@ -82,7 +79,7 @@ class Configuration(private val properties: NestedKeyValueStore) {
                 )
             }
             else -> {
-                result = parse(fieldType, config, fieldValue, encryptedKey)
+                result = parse(fieldType, config, fieldValue)
             }
         }
         return result
@@ -100,7 +97,7 @@ class Configuration(private val properties: NestedKeyValueStore) {
         return properties.readCollection(config)?.let { collection ->
             result.addAll(collection.map {
                 if (isSimpleType(elementType)) {
-                    SimpleObjectParser.parse(elementType, it)
+                    parser.parse(elementType, it)
                 } else {
                     val type = properties.getSubStore(config).getValue(it)?.run {
                         if (startsWith("@")) {
@@ -129,13 +126,12 @@ class Configuration(private val properties: NestedKeyValueStore) {
     private fun parse(
         fieldType: Class<*>,
         config: String,
-        fieldValue: Any?,
-        encryptedKey: String? = null
+        fieldValue: Any?
     ): Any? {
         if (isSimpleType(fieldType)) {
-            return properties.getValue(config, fieldType, encryptedKey)
+            return properties.getValue(config)?.let { parser.parse(fieldType, it) }
         } else {
-            val implClass = properties.getValue(config, String::class.java)
+            val implClass = properties.getValue(config)
 
             return if (implClass != null || fieldValue != null) {
                 val configuration = getSubConfig(config)
@@ -184,14 +180,14 @@ class Configuration(private val properties: NestedKeyValueStore) {
                     val value = properties.getValue(key)
                     checkNotNull(value)
                     val type = if (value.isNotBlank()) Class.forName(value) else valueType
-                    map[SimpleObjectParser.parse(keyClass, key, null)] = getSubConfig(key).get(type)
+                    map[parser.parse(keyClass, key)] = getSubConfig(key).get(type)
                 } else {
                     // With parameterized type
                     val valueType = valueType as ParameterizedType
                     val rawType = valueType.rawType as Class<MutableCollection<Any>>
 
-                    val collection = parseField(rawType, valueType, key, null, null) as MutableCollection<Any>
-                    map[SimpleObjectParser.parse(keyClass, key)] = collection
+                    val collection = parseField(rawType, valueType, key, null) as MutableCollection<Any>
+                    map[parser.parse(keyClass, key)] = collection
                 }
             }
         }

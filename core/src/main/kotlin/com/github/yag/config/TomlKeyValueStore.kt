@@ -11,19 +11,18 @@ class TomlKeyValueStore(private val table: TomlTable, private val base: String =
         return TomlKeyValueStore(table.getTableOrEmpty(key), prefix)
     }
 
-    override fun <T : Any> getValue(key: String, type: Class<T>, encryptedKey: String?): T? {
+    override fun getValue(key: String): String? {
         require(!key.contains('.')) {
             key
         }
         return table.get(key)?.let {  value ->
-            val str = if (value is TomlArray) {
+            if (value is TomlArray) {
                 Array(value.size()) {
                     value.get(it)
                 }.joinToString(",")
             } else {
                 value.toString()
             }
-            SimpleObjectParser.parse(type, str, encryptedKey)
         }
     }
 

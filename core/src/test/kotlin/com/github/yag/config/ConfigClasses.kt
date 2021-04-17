@@ -15,7 +15,6 @@ class StringConfig {
     var username: String = "root"
 
     @Value("password", required = true)
-    @Encrypted("foo")
     lateinit var password: String
 
 }
