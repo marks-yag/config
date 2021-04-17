@@ -96,6 +96,9 @@ class MapConfig {
 
 }
 
+@SubTypes(
+    values = [SubTypes.Type(LocalStore::class, "local"), SubTypes.Type(RemoteStore::class, "remote")]
+)
 interface Store {
 }
 

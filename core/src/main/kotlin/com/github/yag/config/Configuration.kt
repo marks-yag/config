@@ -6,6 +6,7 @@ import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.*
+import kotlin.IllegalStateException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
@@ -102,13 +103,27 @@ class Configuration(private val properties: NestedKeyValueStore) {
                     SimpleObjectParser.parse(elementType, it)
                 } else {
                     val type = properties.getSubStore(config).getValue(it)?.run {
-                        Class.forName(this)
+                        if (startsWith("@")) {
+                            getSubType(elementType, removePrefix("@"))
+                        } else {
+                            Class.forName(this)
+                        }
                     } ?: elementType
                     getSubConfig(config).getSubConfig(it).get(type)
                 }
             })
             result
         }
+    }
+
+    private fun getSubType(type: Class<*>, id: String): Class<*> {
+        val subTypes = type.getAnnotation(SubTypes::class.java)
+        checkNotNull(subTypes) {
+            "A SubTypes annotation was expected for $type."
+        }
+        return (subTypes.values.firstOrNull {
+            it.id == id
+        } ?: throw IllegalStateException("No sub type id $id found for $type")).value.java
     }
 
     private fun parse(
@@ -121,9 +136,17 @@ class Configuration(private val properties: NestedKeyValueStore) {
             return properties.getValue(config, fieldType, encryptedKey)
         } else {
             val implClass = properties.getValue(config, String::class.java)
+
             return if (implClass != null || fieldValue != null) {
                 val configuration = getSubConfig(config)
-                val type = if (implClass.isNullOrBlank()) fieldType else Class.forName(implClass)
+                val type = if (implClass != null && implClass.startsWith("@")) {
+                    getSubType(fieldType, implClass.removePrefix("@"))
+                } else if (implClass.isNullOrBlank()) {
+                    fieldType
+                } else {
+                    Class.forName(implClass)
+                }
+
                 if (fieldValue == null) {
                     configuration.get(type)
                 } else {

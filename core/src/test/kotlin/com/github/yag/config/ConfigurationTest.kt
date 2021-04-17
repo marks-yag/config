@@ -160,7 +160,7 @@ class ConfigurationTest {
     @Test
     fun testSubType() {
         mapOf(
-            "store" to LocalStore::class.java.name,
+            "store" to "@local",
             "store.local-addr" to "foo"
         ).config(SubTypeConfig::class).let {
             it.store.let {
@@ -182,7 +182,7 @@ class ConfigurationTest {
             "stores" to "hot,cold",
             "stores.hot" to LocalStore::class.java.name,
             "stores.hot.local-addr" to "foo",
-            "stores.cold" to RemoteStore::class.java.name,
+            "stores.cold" to "@remote",
             "stores.cold.remote-addr" to "bar"
         ).config(CollectionConfig::class).let {
             assertEquals(Options.values().toSet(), it.options)
