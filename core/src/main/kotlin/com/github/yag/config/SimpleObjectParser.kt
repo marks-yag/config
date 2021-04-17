@@ -1,8 +1,11 @@
 package com.github.yag.config
 
+import java.io.File
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class SimpleObjectParser {
 
@@ -20,6 +23,8 @@ class SimpleObjectParser {
         register(InetSocketAddress::class.java) { it.split(":").run { InetSocketAddress(this[0], this[1].toInt()) } }
         register(URL::class.java) { URL(it) }
         register(URI::class.java) { URI(it) }
+        register(File::class.java) { File(it) }
+        register(Path::class.java) { Paths.get(it) }
     }
 
     fun <T : Any> parse(
