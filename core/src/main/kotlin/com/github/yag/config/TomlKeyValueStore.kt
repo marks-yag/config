@@ -37,11 +37,12 @@ class TomlKeyValueStore(private val table: TomlTable, private val base: String =
             key
         }
 
-        val array = table.getArrayOrEmpty(key)
-        val size = array.size()
-        return Array(size) {
-            array.get(it).toString()
-        }.toList()
+        return table.getArray(key)?.let { array ->
+            val size = array.size()
+            return Array(size) {
+                array.get(it).toString()
+            }.toList()
+        }
     }
 
     override fun getEntries(): Set<String> {
