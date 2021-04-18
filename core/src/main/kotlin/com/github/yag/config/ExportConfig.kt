@@ -1,6 +1,5 @@
 package com.github.yag.config
 
-import com.google.common.base.CaseFormat
 import java.io.OutputStream
 import java.io.PrintStream
 import java.net.InetSocketAddress
@@ -49,17 +48,15 @@ object ExportConfig {
 
             if (annotation != null) {
                 val config = annotation.config.let {
-                    if (it.isEmpty()) {
-                        CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, field.name)
-                    } else {
-                        it
+                    it.ifEmpty {
+                        toLowerHyphen(field.name)
                     }
                 }
 
                 val configName = prefix + config
                 if (!map.contains(configName)) {
                     when {
-                        isSimpleType(fieldType) || fieldValue is Collection<*> -> {
+                        SimpleObjectParser().isSimple(fieldType) || fieldValue is Collection<*> -> {
                             map[configName] = Item(fieldValue, annotation, required && annotation.required)
                         }
                         fieldValue is Map<*, *> -> {
@@ -115,7 +112,7 @@ object ExportConfig {
                 }
             }
             value is Enum<*> -> value.name
-            isSimpleType(value.javaClass) -> escape(value.toString())
+            SimpleObjectParser().isSimple(value.javaClass) -> escape(value.toString())
             else -> {
                 value.javaClass.name
             }

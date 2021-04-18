@@ -1,6 +1,5 @@
 package com.github.yag.config
 
-import com.google.common.base.CaseFormat
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
@@ -38,10 +37,8 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
 
             if (annotation != null) {
                 val config = annotation.config.let {
-                    if (it.isEmpty()) {
-                        CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_HYPHEN, field.name)
-                    } else {
-                        it
+                    it.ifEmpty {
+                        toLowerHyphen(field.name)
                     }
                 }
 
@@ -96,7 +93,7 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
 
         return properties.readCollection(config)?.let { collection ->
             result.addAll(collection.map {
-                if (isSimpleType(elementType)) {
+                if (parser.isSimple(elementType)) {
                     parser.parse(elementType, it)
                 } else {
                     val type = properties.getSubStore(config).getValue(it)?.run {
@@ -128,7 +125,7 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
         config: String,
         fieldValue: Any?
     ): Any? {
-        if (isSimpleType(fieldType)) {
+        if (parser.isSimple(fieldType)) {
             return properties.getValue(config)?.let { parser.parse(fieldType, it) }
         } else {
             val implClass = properties.getValue(config)

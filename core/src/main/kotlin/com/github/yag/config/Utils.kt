@@ -1,11 +1,7 @@
 package com.github.yag.config
 
-import com.google.common.primitives.Primitives
 import java.lang.reflect.Field
 import java.lang.reflect.Method
-import java.net.InetSocketAddress
-import java.net.URI
-import java.net.URL
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -29,15 +25,6 @@ internal fun getDeclaredMethods(type: Class<*>, methods: MutableCollection<Metho
     return methods
 }
 
-internal fun isSimpleType(fieldType: Class<*>) =
-    fieldType == java.lang.String::class.java ||
-            fieldType.isPrimitive ||
-            Primitives.isWrapperType(fieldType) ||
-            fieldType.isEnum ||
-            fieldType == URI::class.java ||
-            fieldType == URL::class.java ||
-            fieldType == InetSocketAddress::class.java
-
 internal fun isCollectionType(fieldType: Class<*>) = Collection::class.java.isAssignableFrom(fieldType)
 
 internal fun isMapType(fieldType: Class<*>) = Map::class.java.isAssignableFrom(fieldType)
@@ -52,4 +39,14 @@ fun Properties.toStringMap() : Map<String, String> {
             map[key] = getProperty(key)
         }
     }
+}
+
+fun toLowerHyphen(str: String) : String {
+    return str.map {
+        if (it.isUpperCase()) {
+            "-" + it.toLowerCase()
+        } else {
+            it
+        }
+    }.joinToString("").removePrefix("_")
 }

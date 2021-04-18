@@ -14,12 +14,20 @@ class SimpleObjectParser {
     init {
         register(String::class.java) { it }
         register(Int::class.java) { it.toInt() }
+        register(Int::class.javaObjectType) { it.toInt() }
         register(Long::class.java) { it.toLong() }
+        register(Long::class.javaObjectType) { it.toLong() }
         register(Float::class.java) { it.toFloat() }
+        register(Float::class.javaObjectType) { it.toFloat() }
         register(Double::class.java) { it.toDouble() }
+        register(Double::class.javaObjectType) { it.toDouble() }
         register(Short::class.java) { it.toShort() }
+        register(Short::class.javaObjectType) { it.toShort() }
         register(Byte::class.java) { it.toByte() }
+        register(Byte::class.javaObjectType) { it.toByte() }
         register(Boolean::class.java) { it.toBoolean() }
+        register(Boolean::class.javaObjectType) { it.toBoolean() }
+
         register(InetSocketAddress::class.java) { it.split(":").run { InetSocketAddress(this[0], this[1].toInt()) } }
         register(URL::class.java) { URL(it) }
         register(URI::class.java) { URI(it) }
@@ -40,6 +48,10 @@ class SimpleObjectParser {
             }
             parser.parse(value)
         }) as T
+    }
+
+    fun isSimple(type: Class<*>) : Boolean {
+        return type.isEnum || parsers.containsKey(type)
     }
 
     fun <T> register(type: Class<T>, parser: Parser<T>) {
