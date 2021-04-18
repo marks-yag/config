@@ -15,13 +15,13 @@ class SimpleObjectParser {
 
     init {
         register(String::class.java) { it }
-        register(Int::class) { it.toInt() }
-        register(Long::class) { it.toLong() }
-        register(Float::class) { it.toFloat() }
-        register(Double::class) { it.toDouble() }
-        register(Short::class) { it.toShort() }
-        register(Byte::class) { it.toByte() }
-        register(Boolean::class) { it.toBoolean() }
+        registerKClass(Int::class) { it.toInt() }
+        registerKClass(Long::class) { it.toLong() }
+        registerKClass(Float::class) { it.toFloat() }
+        registerKClass(Double::class) { it.toDouble() }
+        registerKClass(Short::class) { it.toShort() }
+        registerKClass(Byte::class) { it.toByte() }
+        registerKClass(Boolean::class) { it.toBoolean() }
 
         register(InetSocketAddress::class.java) { it.split(":").run { InetSocketAddress(this[0], this[1].toInt()) } }
         register(URL::class.java) { URL(it) }
@@ -50,8 +50,8 @@ class SimpleObjectParser {
         return type.isEnum || parsers.containsKey(type)
     }
 
-    private fun <T: Any> register(type: KClass<T>, parser: Parser<T>) {
-        type.javaObjectType?.let { register(it, parser) }
+    private fun <T: Any> registerKClass(type: KClass<T>, parser: Parser<T>) {
+        register(type.javaObjectType, parser)
         register(type.java, parser)
     }
 
