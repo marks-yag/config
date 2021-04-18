@@ -6,6 +6,7 @@ import java.net.URI
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.Duration
 import kotlin.reflect.KClass
 
 class SimpleObjectParser {
@@ -27,6 +28,7 @@ class SimpleObjectParser {
         register(URI::class.java) { URI(it) }
         register(File::class.java) { File(it) }
         register(Path::class.java) { Paths.get(it) }
+        register(Duration::class.java) { Duration.parse(it) }
     }
 
     fun <T : Any> parse(
