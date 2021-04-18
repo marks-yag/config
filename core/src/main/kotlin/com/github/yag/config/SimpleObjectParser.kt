@@ -6,6 +6,7 @@ import java.net.URI
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.reflect.KClass
 
 class SimpleObjectParser {
 
@@ -13,20 +14,13 @@ class SimpleObjectParser {
 
     init {
         register(String::class.java) { it }
-        register(Int::class.java) { it.toInt() }
-        register(Int::class.javaObjectType) { it.toInt() }
-        register(Long::class.java) { it.toLong() }
-        register(Long::class.javaObjectType) { it.toLong() }
-        register(Float::class.java) { it.toFloat() }
-        register(Float::class.javaObjectType) { it.toFloat() }
-        register(Double::class.java) { it.toDouble() }
-        register(Double::class.javaObjectType) { it.toDouble() }
-        register(Short::class.java) { it.toShort() }
-        register(Short::class.javaObjectType) { it.toShort() }
-        register(Byte::class.java) { it.toByte() }
-        register(Byte::class.javaObjectType) { it.toByte() }
-        register(Boolean::class.java) { it.toBoolean() }
-        register(Boolean::class.javaObjectType) { it.toBoolean() }
+        register(Int::class) { it.toInt() }
+        register(Long::class) { it.toLong() }
+        register(Float::class) { it.toFloat() }
+        register(Double::class) { it.toDouble() }
+        register(Short::class) { it.toShort() }
+        register(Byte::class) { it.toByte() }
+        register(Boolean::class) { it.toBoolean() }
 
         register(InetSocketAddress::class.java) { it.split(":").run { InetSocketAddress(this[0], this[1].toInt()) } }
         register(URL::class.java) { URL(it) }
@@ -52,6 +46,11 @@ class SimpleObjectParser {
 
     fun isSimple(type: Class<*>) : Boolean {
         return type.isEnum || parsers.containsKey(type)
+    }
+
+    private fun <T: Any> register(type: KClass<T>, parser: Parser<T>) {
+        type.javaObjectType?.let { register(it, parser) }
+        register(type.java, parser)
     }
 
     fun <T> register(type: Class<T>, parser: Parser<T>) {
