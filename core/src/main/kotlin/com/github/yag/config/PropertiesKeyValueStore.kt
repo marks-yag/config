@@ -12,9 +12,7 @@ class PropertiesKeyValueStore(private val map: Map<String, String>, private val 
             key
         }
         val fullKey = getFullKey(key)
-        return map[fullKey]?.let {  value ->
-            value
-        }
+        return map[fullKey]
     }
 
     override fun readCollection(key: String) : Collection<String>? {

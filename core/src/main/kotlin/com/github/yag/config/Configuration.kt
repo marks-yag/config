@@ -19,7 +19,7 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
     constructor(properties: Properties) : this(properties.toStringMap())
 
     private fun <T : Any> refresh(obj: T) {
-        val initMethod = getDeclaredMethods(obj.javaClass).singleOrNull() {
+        val initMethod = getDeclaredMethods(obj.javaClass).singleOrNull {
             it.getAnnotationsByType(Init::class.java) != null
         }
         initMethod?.let {
@@ -44,7 +44,7 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
 
                 require(config.isNotEmpty())
 
-                var result = parseField(fieldType, genericFieldType, config, fieldValue)
+                val result = parseField(fieldType, genericFieldType, config, fieldValue)
                 checkRequired(result, annotation)
 
                 result?.let { field.set(obj, result) }

@@ -1,6 +1,5 @@
 package com.github.yag.config
 
-import org.slf4j.LoggerFactory
 import org.tomlj.TomlArray
 import org.tomlj.TomlTable
 
@@ -47,9 +46,5 @@ class TomlKeyValueStore(private val table: TomlTable, private val base: String =
 
     override fun getEntries(): Set<String> {
         return table.keySet()
-    }
-
-    companion object {
-        private val LOG = LoggerFactory.getLogger(TomlKeyValueStore::class.java)
     }
 }
