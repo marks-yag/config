@@ -12,7 +12,7 @@ import kotlin.collections.HashSet
 import kotlin.collections.set
 import kotlin.reflect.KClass
 
-class Configuration @JvmOverloads constructor(private val properties: NestedKeyValueStore, private val parser: SimpleObjectParser = SimpleObjectParser()) {
+class Configuration @JvmOverloads constructor(private val properties: NestedKeyValueStore, private val simpleObjects: SimpleObjects = SimpleObjects()) {
 
     private fun <T : Any> refresh(obj: T) {
         val initMethod = getDeclaredMethods(obj.javaClass).singleOrNull {
@@ -89,8 +89,8 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
 
         return properties.readCollection(config)?.let { collection ->
             result.addAll(collection.map {
-                if (parser.isSimple(elementType)) {
-                    parser.parse(elementType, it)
+                if (simpleObjects.isSimple(elementType)) {
+                    simpleObjects.parse(elementType, it)
                 } else {
                     val type = properties.getSubStore(config).getValue(it)?.run {
                         if (startsWith("@")) {
@@ -121,8 +121,8 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
         config: String,
         fieldValue: Any?
     ): Any? {
-        if (parser.isSimple(fieldType)) {
-            return properties.getValue(config)?.let { parser.parse(fieldType, it) }
+        if (simpleObjects.isSimple(fieldType)) {
+            return properties.getValue(config)?.let { simpleObjects.parse(fieldType, it) }
         } else {
             val implClass = properties.getValue(config)
 
@@ -173,14 +173,14 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
                     val value = properties.getValue(key)
                     checkNotNull(value)
                     val type = if (value.isNotBlank()) Class.forName(value) else valueType
-                    map[parser.parse(keyClass, key)] = getSubConfig(key).get(type)
+                    map[simpleObjects.parse(keyClass, key)] = getSubConfig(key).get(type)
                 } else {
                     // With parameterized type
                     val valueType = valueType as ParameterizedType
                     val rawType = valueType.rawType as Class<MutableCollection<Any>>
 
                     val collection = parseField(rawType, valueType, key, null) as MutableCollection<Any>
-                    map[parser.parse(keyClass, key)] = collection
+                    map[simpleObjects.parse(keyClass, key)] = collection
                 }
             }
         }

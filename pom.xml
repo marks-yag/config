@@ -19,7 +19,6 @@
     <modules>
         <module>annotation</module>
         <module>core</module>
-        <module>maven-plugin</module>
     </modules>
 
     <properties>

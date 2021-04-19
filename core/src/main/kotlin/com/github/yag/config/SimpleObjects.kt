@@ -9,9 +9,11 @@ import java.nio.file.Paths
 import java.time.Duration
 import kotlin.reflect.KClass
 
-class SimpleObjectParser {
+class SimpleObjects {
 
     private val parsers = HashMap<Class<*>, Parser<*>>()
+
+    private val formatters = HashMap<Class<*>, Formatter<out Any>>()
 
     init {
         registerParser(String::class.java) { it }
@@ -25,6 +27,8 @@ class SimpleObjectParser {
         registerParserKClass(Boolean::class) { it.toBoolean() }
 
         registerParser(InetSocketAddress::class.java) { it.split(":").run { InetSocketAddress(this[0], this[1].toInt()) } }
+        registerFormatter(InetSocketAddress::class.java) { "${it.hostString}:${it.port}" }
+
         registerParser(URL::class.java) { URL(it) }
         registerParser(URI::class.java) { URI(it) }
         registerParser(File::class.java) { File(it) }
@@ -47,6 +51,19 @@ class SimpleObjectParser {
         }) as T
     }
 
+    fun <T: Any> format(obj: T) : String {
+        return getFormatter(obj.javaClass).format(obj)
+    }
+
+    private fun <T> getFormatter(type: Class<T>) : Formatter<Any> {
+        return (formatters[type]
+            ?: if (type != Object::class.java) {
+                getFormatter(type.superclass)
+            } else {
+                Formatter { it.toString() }
+            }) as Formatter<Any>
+    }
+
     fun isSimple(type: Class<*>) : Boolean {
         return type.isEnum || parsers.containsKey(type)
     }
@@ -58,6 +75,10 @@ class SimpleObjectParser {
 
     fun <T> registerParser(type: Class<T>, parser: Parser<T>) {
         parsers[type] = parser
+    }
+
+    fun <T: Any> registerFormatter(type: Class<T>, formatter: Formatter<T>) {
+        formatters[type] = formatter
     }
 
 }
