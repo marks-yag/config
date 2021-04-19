@@ -14,21 +14,22 @@ class SimpleObjectParser {
     private val parsers = HashMap<Class<*>, Parser<*>>()
 
     init {
-        register(String::class.java) { it }
-        registerKClass(Int::class) { it.toInt() }
-        registerKClass(Long::class) { it.toLong() }
-        registerKClass(Float::class) { it.toFloat() }
-        registerKClass(Double::class) { it.toDouble() }
-        registerKClass(Short::class) { it.toShort() }
-        registerKClass(Byte::class) { it.toByte() }
-        registerKClass(Boolean::class) { it.toBoolean() }
+        registerParser(String::class.java) { it }
 
-        register(InetSocketAddress::class.java) { it.split(":").run { InetSocketAddress(this[0], this[1].toInt()) } }
-        register(URL::class.java) { URL(it) }
-        register(URI::class.java) { URI(it) }
-        register(File::class.java) { File(it) }
-        register(Path::class.java) { Paths.get(it) }
-        register(Duration::class.java) { Duration.parse(it) }
+        registerParserKClass(Int::class) { it.toInt() }
+        registerParserKClass(Long::class) { it.toLong() }
+        registerParserKClass(Float::class) { it.toFloat() }
+        registerParserKClass(Double::class) { it.toDouble() }
+        registerParserKClass(Short::class) { it.toShort() }
+        registerParserKClass(Byte::class) { it.toByte() }
+        registerParserKClass(Boolean::class) { it.toBoolean() }
+
+        registerParser(InetSocketAddress::class.java) { it.split(":").run { InetSocketAddress(this[0], this[1].toInt()) } }
+        registerParser(URL::class.java) { URL(it) }
+        registerParser(URI::class.java) { URI(it) }
+        registerParser(File::class.java) { File(it) }
+        registerParser(Path::class.java) { Paths.get(it) }
+        registerParser(Duration::class.java) { Duration.parse(it) }
     }
 
     fun <T : Any> parse(
@@ -50,12 +51,12 @@ class SimpleObjectParser {
         return type.isEnum || parsers.containsKey(type)
     }
 
-    private fun <T: Any> registerKClass(type: KClass<T>, parser: Parser<T>) {
-        register(type.javaObjectType, parser)
-        register(type.java, parser)
+    private fun <T: Any> registerParserKClass(type: KClass<T>, parser: Parser<T>) {
+        registerParser(type.javaObjectType, parser)
+        registerParser(type.java, parser)
     }
 
-    fun <T> register(type: Class<T>, parser: Parser<T>) {
+    fun <T> registerParser(type: Class<T>, parser: Parser<T>) {
         parsers[type] = parser
     }
 

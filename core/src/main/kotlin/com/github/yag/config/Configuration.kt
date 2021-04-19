@@ -14,10 +14,6 @@ import kotlin.reflect.KClass
 
 class Configuration @JvmOverloads constructor(private val properties: NestedKeyValueStore, private val parser: SimpleObjectParser = SimpleObjectParser()) {
 
-    constructor(properties: Map<String, String>) : this(PropertiesKeyValueStore(properties))
-
-    constructor(properties: Properties) : this(properties.toStringMap())
-
     private fun <T : Any> refresh(obj: T) {
         val initMethod = getDeclaredMethods(obj.javaClass).singleOrNull {
             it.getAnnotationsByType(Init::class.java) != null
@@ -227,7 +223,7 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
 }
 
 fun <T : Any> Properties.config(clazz: Class<T>): T {
-    return Configuration(this).get(clazz)
+    return toStringMap().config(clazz)
 }
 
 fun <T : Any> Properties.config(clazz: KClass<T>): T {
@@ -235,7 +231,7 @@ fun <T : Any> Properties.config(clazz: KClass<T>): T {
 }
 
 fun <T : Any> Map<String, String>.config(clazz: Class<T>): T {
-    return Configuration(this).get(clazz)
+    return Configuration(PropertiesKeyValueStore(this)).get(clazz)
 }
 
 fun <T : Any> Map<String, String>.config(clazz: KClass<T>): T {
