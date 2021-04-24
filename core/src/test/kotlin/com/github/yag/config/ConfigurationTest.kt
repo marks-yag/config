@@ -207,9 +207,19 @@ class ConfigurationTest {
 
     @Test
     fun testToml() {
-        val store = ConfigLoader.load(Format.TOML, "demo.toml" )
+        val store = ConfigLoader.load(Format.TOML, "demo.toml")
         val demo = Configuration(store).get(Demo::class.java)
+        verify(demo)
+    }
 
+    @Test
+    fun testIni() {
+        val store = ConfigLoader.load(Format.INI, "demo.ini")
+        val demo = Configuration(store).get(Demo::class.java)
+        verify(demo)
+    }
+
+    private fun verify(demo: Demo) {
         assertEquals("TOML Example", demo.title)
         assertEquals("Tom Preston-Werner", demo.owner.name)
         assertEquals("1979-05-27T07:32:01-08:00", demo.owner.dob)
