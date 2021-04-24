@@ -19,6 +19,8 @@ class TomlKeyValueStore(private val table: TomlTable, private val base: String =
                 Array(value.size()) {
                     value.get(it)
                 }.joinToString(",")
+            } else if (value is TomlTable) {
+                null
             } else {
                 value.toString()
             }

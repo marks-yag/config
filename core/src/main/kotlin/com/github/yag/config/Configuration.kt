@@ -15,6 +15,7 @@ import kotlin.reflect.KClass
 class Configuration @JvmOverloads constructor(private val properties: NestedKeyValueStore, private val simpleObjects: SimpleObjects = SimpleObjects()) {
 
     private fun <T : Any> refresh(obj: T) {
+        LOG.debug("Refresh: {}.", obj)
         val initMethod = getDeclaredMethods(obj.javaClass).singleOrNull {
             it.getAnnotationsByType(Init::class.java) != null
         }
@@ -72,7 +73,11 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
                 )
             }
             else -> {
-                result = parse(fieldType, config, fieldValue)
+                result = try {
+                    parse(fieldType, config, fieldValue)
+                } catch (e: Exception) {
+                    throw IllegalStateException("Parse $config failed.", e)
+                }
             }
         }
         return result
@@ -171,8 +176,7 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
                 if (valueType is Class<*>) {
                     // Without parameterized type
                     val value = properties.getValue(key)
-                    checkNotNull(value)
-                    val type = if (value.isNotBlank()) Class.forName(value) else valueType
+                    val type = if (value.isNullOrBlank()) valueType else Class.forName(value)
                     map[simpleObjects.parse(keyClass, key)] = getSubConfig(key).get(type)
                 } else {
                     // With parameterized type

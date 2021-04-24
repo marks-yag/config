@@ -2,33 +2,64 @@ package com.github.yag.config
 
 class Demo {
 
-    private lateinit var title: String
+    @Value
+    private var title: String = ""
 
-    private lateinit var owner: Owner
+    @Value
+    private var owner: Owner = Owner()
 
-    private lateinit var database: Database
+    @Value
+    private var database: Database = Database()
 
-    private lateinit var servers: Map<String, Server>
+    @Value
+    private var servers: Map<String, Server> = HashMap<String, Server>()
+
+
 
     class Owner {
-        private lateinit var name: String
-        private lateinit var dob: String
+        @Value
+        private var name: String = ""
+        @Value
+        private var dob: String = ""
+
+        override fun toString(): String {
+            return "Owner(name='$name', dob='$dob')"
+        }
     }
 
     class Database {
+        @Value
         private var enabled = false
+        @Value
         private var ports = ArrayList<Int>()
-        private var data = ArrayList<ArrayList<Any>>()
+        @Value("temp_targets")
         private var tempTargets = Temp()
+        override fun toString(): String {
+            return "Database(enabled=$enabled, ports=$ports, tempTargets=$tempTargets)"
+        }
     }
 
     class Temp {
+        @Value
         private var cpu = 0.0
+        @Value
         private var case = 0.0
+        override fun toString(): String {
+            return "Temp(cpu=$cpu, case=$case)"
+        }
     }
 
     class Server {
-        private lateinit var ip: String
-        private lateinit var role: String
+        @Value
+        private var ip: String = ""
+        @Value
+        private var role: String = ""
+        override fun toString(): String {
+            return "Server(ip='$ip', role='$role')"
+        }
+    }
+
+    override fun toString(): String {
+        return "Demo(title='$title', owner=$owner, database=$database, servers=$servers)"
     }
 }

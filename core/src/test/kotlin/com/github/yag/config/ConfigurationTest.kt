@@ -1,5 +1,9 @@
 package com.github.yag.config
 
+import org.junit.platform.commons.util.ReflectionUtils
+import org.tomlj.Toml
+import java.lang.IllegalStateException
+import java.lang.NumberFormatException
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
@@ -36,9 +40,11 @@ class ConfigurationTest {
 
     @Test
     fun testIllegalNumber() {
-        assertFailsWith<NumberFormatException> {
+        val cause = assertFailsWith<IllegalStateException> {
             mapOf("port" to "foo").config(NumberConfig::class)
-        }
+        }.cause
+        assertNotNull(cause)
+        assertEquals(NumberFormatException::class.java, cause.javaClass)
     }
 
     @Test
@@ -197,6 +203,14 @@ class ConfigurationTest {
         } catch (e: IllegalArgumentException) {
             assertEquals("username is required.", e.message)
         }
+    }
+
+    @Test
+    fun testToml() {
+        val store = ConfigLoader.load(Format.TOML, "demo.toml" )
+        val demo = Configuration(store).get(Demo::class.java)
+
+        println(demo)
     }
 
 }
