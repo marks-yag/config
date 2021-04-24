@@ -3,24 +3,22 @@ package com.github.yag.config
 class Demo {
 
     @Value
-    private var title: String = ""
+    var title: String = ""
 
     @Value
-    private var owner: Owner = Owner()
+    var owner: Owner = Owner()
 
     @Value
-    private var database: Database = Database()
+    var database: Database = Database()
 
     @Value
-    private var servers: Map<String, Server> = HashMap<String, Server>()
-
-
+    var servers: Map<String, Server> = HashMap<String, Server>()
 
     class Owner {
         @Value
-        private var name: String = ""
+        var name: String = ""
         @Value
-        private var dob: String = ""
+        var dob: String = ""
 
         override fun toString(): String {
             return "Owner(name='$name', dob='$dob')"
@@ -29,11 +27,11 @@ class Demo {
 
     class Database {
         @Value
-        private var enabled = false
+        var enabled = false
         @Value
-        private var ports = ArrayList<Int>()
+        var ports = ArrayList<Int>()
         @Value("temp_targets")
-        private var tempTargets = Temp()
+        var tempTargets = Temp()
         override fun toString(): String {
             return "Database(enabled=$enabled, ports=$ports, tempTargets=$tempTargets)"
         }
@@ -41,9 +39,9 @@ class Demo {
 
     class Temp {
         @Value
-        private var cpu = 0.0
+        var cpu = 0.0
         @Value
-        private var case = 0.0
+        var case = 0.0
         override fun toString(): String {
             return "Temp(cpu=$cpu, case=$case)"
         }
@@ -51,9 +49,9 @@ class Demo {
 
     class Server {
         @Value
-        private var ip: String = ""
+        var ip: String = ""
         @Value
-        private var role: String = ""
+        var role: String = ""
         override fun toString(): String {
             return "Server(ip='$ip', role='$role')"
         }

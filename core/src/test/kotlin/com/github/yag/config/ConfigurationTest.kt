@@ -210,7 +210,23 @@ class ConfigurationTest {
         val store = ConfigLoader.load(Format.TOML, "demo.toml" )
         val demo = Configuration(store).get(Demo::class.java)
 
-        println(demo)
+        assertEquals("TOML Example", demo.title)
+        assertEquals("Tom Preston-Werner", demo.owner.name)
+        assertEquals("1979-05-27T07:32:01-08:00", demo.owner.dob)
+        assertTrue(demo.database.enabled)
+        assertEquals(listOf(8000, 8001, 8002), demo.database.ports)
+        assertEquals(79.5, demo.database.tempTargets.cpu)
+        assertEquals(72.0, demo.database.tempTargets.case)
+
+        assertEquals(2, demo.servers.size)
+        val alpha = demo.servers["alpha"]
+        assertNotNull(alpha)
+        assertEquals("10.0.0.1", alpha.ip)
+        assertEquals("frontend", alpha.role)
+        val beta = demo.servers["beta"]
+        assertNotNull(beta)
+        assertEquals("10.0.0.2", beta.ip)
+        assertEquals("backend", beta.role)
     }
 
 }
