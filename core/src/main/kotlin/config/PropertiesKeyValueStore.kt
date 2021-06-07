@@ -1,4 +1,4 @@
-package com.github.yag.config
+package config
 
 class PropertiesKeyValueStore(private val map: Map<String, String>, private val base: String = "") : NestedKeyValueStore {
 

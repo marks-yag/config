@@ -1,4 +1,4 @@
-package com.github.yag.config
+package config
 
 import org.slf4j.LoggerFactory
 import java.lang.reflect.Modifier

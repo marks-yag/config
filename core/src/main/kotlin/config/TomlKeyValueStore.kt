@@ -1,4 +1,4 @@
-package com.github.yag.config
+package config
 
 import org.tomlj.TomlArray
 import org.tomlj.TomlTable

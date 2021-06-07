@@ -1,4 +1,4 @@
-package com.github.yag.config
+package config
 
 enum class Format(private vararg val extensions: String) {
     TOML("toml"),

@@ -1,4 +1,4 @@
-package com.github.yag.config
+package config
 
 import java.lang.IllegalStateException
 import java.lang.NumberFormatException

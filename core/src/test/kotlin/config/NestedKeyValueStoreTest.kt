@@ -1,4 +1,4 @@
-package com.github.yag.config
+package config
 
 import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.*

@@ -1,4 +1,4 @@
-package com.github.yag.config
+package config
 
 @Target(AnnotationTarget.FIELD)
 annotation class Value (

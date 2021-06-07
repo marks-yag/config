@@ -1,4 +1,4 @@
-package com.github.yag.config
+package config
 
 import java.net.InetSocketAddress
 import java.net.URI

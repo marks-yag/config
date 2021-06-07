@@ -1,4 +1,4 @@
-package com.github.yag.config
+package config
 
 import java.lang.reflect.Field
 import java.lang.reflect.Method
