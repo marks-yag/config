@@ -3,7 +3,6 @@ package config
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.util.*
-import kotlin.collections.ArrayList
 
 internal fun getDeclaredFields(type: Class<*>, fields: MutableCollection<Field> = ArrayList()): Collection<Field> {
     if (type != Object::class.java) {
@@ -33,7 +32,7 @@ fun getEnumValue(type: Class<*>, enumValue: String): Enum<*> {
     return java.lang.Enum.valueOf(type as Class<Enum<*>>, enumValue)
 }
 
-fun Properties.toStringMap() : Map<String, String> {
+fun Properties.toStringMap(): Map<String, String> {
     return TreeMap<String, String>().also { map ->
         stringPropertyNames().forEach { key ->
             map[key] = getProperty(key)
@@ -41,7 +40,7 @@ fun Properties.toStringMap() : Map<String, String> {
     }
 }
 
-fun toLowerHyphen(str: String) : String {
+fun toLowerHyphen(str: String): String {
     return str.map {
         if (it.isUpperCase()) {
             "-" + it.toLowerCase()

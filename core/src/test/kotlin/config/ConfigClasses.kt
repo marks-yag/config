@@ -4,9 +4,6 @@ import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.LinkedHashMap
 import kotlin.collections.set
 
 class StringConfig {
@@ -98,8 +95,7 @@ class MapConfig {
 @SubTypes(
     values = [SubTypes.Type(LocalStore::class, "local"), SubTypes.Type(RemoteStore::class, "remote")]
 )
-interface Store {
-}
+interface Store
 
 class LocalStore : Store {
 

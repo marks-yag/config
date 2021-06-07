@@ -17,6 +17,7 @@ class Demo {
     class Owner {
         @Value
         var name: String = ""
+
         @Value
         var dob: String = ""
 
@@ -28,8 +29,10 @@ class Demo {
     class Database {
         @Value
         var enabled = false
+
         @Value
         var ports = ArrayList<Int>()
+
         @Value("temp_targets")
         var tempTargets = Temp()
         override fun toString(): String {
@@ -40,6 +43,7 @@ class Demo {
     class Temp {
         @Value
         var cpu = 0.0
+
         @Value
         var case = 0.0
         override fun toString(): String {
@@ -50,6 +54,7 @@ class Demo {
     class Server {
         @Value
         var ip: String = ""
+
         @Value
         var role: String = ""
         override fun toString(): String {

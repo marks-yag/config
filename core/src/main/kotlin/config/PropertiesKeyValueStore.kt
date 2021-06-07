@@ -1,6 +1,7 @@
 package config
 
-class PropertiesKeyValueStore(private val map: Map<String, String>, private val base: String = "") : NestedKeyValueStore {
+class PropertiesKeyValueStore(private val map: Map<String, String>, private val base: String = "") :
+    NestedKeyValueStore {
 
     override fun getSubStore(key: String): PropertiesKeyValueStore {
         val prefix = "${getFullKey(key)}."
@@ -15,12 +16,12 @@ class PropertiesKeyValueStore(private val map: Map<String, String>, private val 
         return map[fullKey]
     }
 
-    override fun readCollection(key: String) : Collection<String>? {
+    override fun readCollection(key: String): Collection<String>? {
         val value = getValue(key)
         return value?.split(",")
     }
 
-    override fun getFullKey(key: String) : String {
+    override fun getFullKey(key: String): String {
         require(!key.contains('.')) {
             key
         }

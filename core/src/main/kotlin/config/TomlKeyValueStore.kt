@@ -14,7 +14,7 @@ class TomlKeyValueStore(private val table: TomlTable, private val base: String =
         require(!key.contains('.')) {
             key
         }
-        return table.get(key)?.let {  value ->
+        return table.get(key)?.let { value ->
             if (value is TomlArray) {
                 Array(value.size()) {
                     value.get(it)

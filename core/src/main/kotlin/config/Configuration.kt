@@ -5,14 +5,13 @@ import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.util.*
-import kotlin.IllegalStateException
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.HashSet
 import kotlin.collections.set
 import kotlin.reflect.KClass
 
-class Configuration @JvmOverloads constructor(private val properties: NestedKeyValueStore, private val simpleObjects: SimpleObjects = SimpleObjects()) {
+class Configuration @JvmOverloads constructor(
+    private val properties: NestedKeyValueStore,
+    private val simpleObjects: SimpleObjects = SimpleObjects()
+) {
 
     private fun <T : Any> refresh(obj: T) {
         LOG.debug("Refresh: {}.", obj)
@@ -61,7 +60,13 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
         var result: Any? = fieldValue
         when {
             isCollectionType(fieldType) -> {
-                result = parseCollection(genericFieldType, config, fieldType, (result?: kotlin.run { getCollection(fieldType as Class<MutableCollection<Any>>) }) as MutableCollection<Any>)
+                result = parseCollection(
+                    genericFieldType,
+                    config,
+                    fieldType,
+                    (result
+                        ?: kotlin.run { getCollection(fieldType as Class<MutableCollection<Any>>) }) as MutableCollection<Any>
+                )
             }
             isMapType(fieldType) -> {
                 if (result == null) {
@@ -89,7 +94,12 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
         fieldType: Class<*>,
         result: MutableCollection<Any>
     ): MutableCollection<Any>? {
-        LOG.debug("Parse collection, generic field type: {}, config: {}, field type: {}.", genericFieldType, config, fieldType)
+        LOG.debug(
+            "Parse collection, generic field type: {}, config: {}, field type: {}.",
+            genericFieldType,
+            config,
+            fieldType
+        )
         val elementType = (genericFieldType as ParameterizedType).actualTypeArguments[0] as Class<*>
 
         return properties.readCollection(config)?.let { collection ->
@@ -190,10 +200,10 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
         }
     }
 
-    private fun getCollection(type: Class<MutableCollection<Any>>) : MutableCollection<Any> {
+    private fun getCollection(type: Class<MutableCollection<Any>>): MutableCollection<Any> {
         val modifier = type.modifiers
         return if (Modifier.isAbstract(modifier) || Modifier.isInterface(modifier)) {
-            when(type) {
+            when (type) {
                 List::class.java -> ArrayList()
                 Set::class.java -> HashSet()
                 else -> throw IllegalArgumentException("Unsupported value type: ${type.name}")
@@ -203,10 +213,10 @@ class Configuration @JvmOverloads constructor(private val properties: NestedKeyV
         }
     }
 
-    private fun getMap(type: Class<MutableMap<Any, Any>>) : MutableMap<Any, Any> {
+    private fun getMap(type: Class<MutableMap<Any, Any>>): MutableMap<Any, Any> {
         val modifier = type.modifiers
         return if (Modifier.isAbstract(modifier) || Modifier.isInterface(modifier)) {
-            when(type) {
+            when (type) {
                 Map::class.java -> HashMap()
                 else -> throw IllegalArgumentException("Unsupported value type: ${type.name}")
             }

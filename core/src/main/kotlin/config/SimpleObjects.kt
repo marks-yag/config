@@ -26,7 +26,9 @@ class SimpleObjects {
         registerParserKClass(Byte::class) { it.toByte() }
         registerParserKClass(Boolean::class) { it.toBoolean() }
 
-        registerParser(InetSocketAddress::class.java) { it.split(":").run { InetSocketAddress(this[0], this[1].toInt()) } }
+        registerParser(InetSocketAddress::class.java) {
+            it.split(":").run { InetSocketAddress(this[0], this[1].toInt()) }
+        }
         registerFormatter(InetSocketAddress::class.java) { "${it.hostString}:${it.port}" }
 
         registerParser(URL::class.java) { URL(it) }
@@ -51,11 +53,11 @@ class SimpleObjects {
         }) as T
     }
 
-    fun <T: Any> format(obj: T) : String {
+    fun <T : Any> format(obj: T): String {
         return getFormatter(obj.javaClass).format(obj)
     }
 
-    private fun <T> getFormatter(type: Class<T>) : Formatter<Any> {
+    private fun <T> getFormatter(type: Class<T>): Formatter<Any> {
         return (formatters[type]
             ?: if (type != Object::class.java) {
                 getFormatter(type.superclass)
@@ -64,11 +66,11 @@ class SimpleObjects {
             }) as Formatter<Any>
     }
 
-    fun isSimple(type: Class<*>) : Boolean {
+    fun isSimple(type: Class<*>): Boolean {
         return type.isEnum || parsers.containsKey(type)
     }
 
-    private fun <T: Any> registerParserKClass(type: KClass<T>, parser: Parser<T>) {
+    private fun <T : Any> registerParserKClass(type: KClass<T>, parser: Parser<T>) {
         registerParser(type.javaObjectType, parser)
         registerParser(type.java, parser)
     }
@@ -77,7 +79,7 @@ class SimpleObjects {
         parsers[type] = parser
     }
 
-    fun <T: Any> registerFormatter(type: Class<T>, formatter: Formatter<T>) {
+    fun <T : Any> registerFormatter(type: Class<T>, formatter: Formatter<T>) {
         formatters[type] = formatter
     }
 

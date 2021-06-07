@@ -1,7 +1,5 @@
 package config
 
-import java.lang.IllegalStateException
-import java.lang.NumberFormatException
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
@@ -107,9 +105,9 @@ class ConfigurationTest {
             "stores.cold.remote-addr" to "bar"
         ).config(CollectionConfig::class).let {
             assertEquals(Options.values().toSet(), it.options)
-            assertTrue(it.list[0]!!.auth)
-            assertFalse(it.list[1]!!.auth)
-            assertTrue(it.list[2]!!.auth)
+            assertTrue(it.list[0].auth)
+            assertFalse(it.list[1].auth)
+            assertTrue(it.list[2].auth)
 
             assertEquals(2, it.stores.size)
             it.stores.first().let {
